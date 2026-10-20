@@ -45,6 +45,7 @@ lerna-debug.log*
 *.sqlite
 *.db
 .supabase/
+supabase/.temp/
 
 # IDE & OS Files
 .vscode/
