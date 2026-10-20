@@ -1,0 +1,73 @@
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'react-hot-toast';
+import { ThemeProvider } from './context/ThemeContext';
+import RootLayout from './layouts/RootLayout';
+import HomePage from './pages/HomePage';
+import NotFoundPage from './pages/NotFoundPage';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000,
+    },
+  },
+});
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#1a1a2e',
+              color: '#fff',
+              border: '1px solid #27315e',
+            },
+          }}
+        />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<RootLayout />}>
+              <Route index element={<HomePage />} />
+              <Route
+                path="ai-chat"
+                element={
+                  <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-2xl border border-gray-200 dark:border-navy-800">
+                    <h2 className="text-2xl font-bold mb-2">AI Help Assistant</h2>
+                    <p className="text-gray-500">RAG pipeline and pgvector integration scheduled for Phase 5.</p>
+                  </div>
+                }
+              />
+              <Route
+                path="tickets"
+                element={
+                  <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-2xl border border-gray-200 dark:border-navy-800">
+                    <h2 className="text-2xl font-bold mb-2">Ticket Management System</h2>
+                    <p className="text-gray-500">Core ticket lifecycle and departmental routing scheduled for Phase 3.</p>
+                  </div>
+                }
+              />
+              <Route
+                path="notifications"
+                element={
+                  <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-2xl border border-gray-200 dark:border-navy-800">
+                    <h2 className="text-2xl font-bold mb-2">Notifications</h2>
+                    <p className="text-gray-500">In-app notifications and Realtime subscriptions scheduled for Phase 4.</p>
+                  </div>
+                }
+              />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+}

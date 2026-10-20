@@ -1,0 +1,2 @@
+-- SmartDesk Seed Data Skeleton (Phase 0)
+-- Full reproducible seed script will be implemented in Phase 1 with Super Admin, Staff, Students, and Tickets.
