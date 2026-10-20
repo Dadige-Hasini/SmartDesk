@@ -173,8 +173,19 @@ SmartDesk is an AI-powered college student support portal built with modern full
 
 ---
 
+---
+
 ## 4. Current Phase Status
 
-- **Active Phase**: Phase 0 (Workspace Foundation & Architecture Setup)
-- **Status**: Complete & Verified
-- **Next Phase**: Phase 1 (Database Schema, Security (RLS) & Migrations)
+- **Completed**:
+  - **Phase 0**: Workspace Foundation & Architecture Setup
+  - **Supabase Integration Milestone**:
+    - Browser-safe frontend Supabase client (`client/src/config/supabase.js`) and AuthContext (`client/src/context/AuthContext.jsx`).
+    - Server-side Supabase client with role separation (`server/src/config/supabase.js`).
+    - Environment templates configured with `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `CLIENT_URL`, `PORT`.
+    - Native Supabase Auth token validation and RBAC middleware (`server/src/middleware/auth.js`).
+    - Versioned SQL migrations for `departments` and `profiles` with least-privilege RLS policies and auth trigger (`supabase/migrations/20261020000001_departments_and_profiles.sql`).
+    - Frontend route protection foundation (`ProtectedRoute.jsx`, `LoginPage.jsx`, `RegisterPage.jsx`).
+    - Super Admin provisioning script (`scripts/provision-super-admin.js`) and documentation (`docs/supabase_setup.md`).
+    - Full test suite passing (20/20 unit/integration tests).
+- **Next Phase**: Full Phase 1 (Remaining Database Schema Tables: categories, routing rules, tickets, comments, attachments, vector index, and seed scripts).

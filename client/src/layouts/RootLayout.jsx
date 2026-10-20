@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import {
   Sun,
   Moon,
@@ -11,12 +12,15 @@ import {
   Ticket,
   Bot,
   Bell,
-  ShieldCheck,
   CheckCircle2,
+  LogOut,
+  LogIn,
+  User,
 } from 'lucide-react';
 
 export default function RootLayout() {
   const { isDark, toggleTheme } = useTheme();
+  const { user, profile, isAuthenticated, role, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -77,13 +81,37 @@ export default function RootLayout() {
               })}
             </nav>
 
-            {/* Right Actions: Theme Toggle & Status indicator */}
+            {/* Right Actions: Auth Status, Theme Toggle */}
             <div className="flex items-center gap-3">
-              {/* Phase Status Badge */}
-              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold border border-emerald-500/20">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Phase 0 Ready</span>
-              </div>
+              {/* User Authentication Status */}
+              {isAuthenticated ? (
+                <div className="hidden sm:flex items-center gap-2.5 pl-2">
+                  <div className="text-right">
+                    <span className="block text-xs font-bold text-gray-900 dark:text-white leading-tight">
+                      {profile?.full_name || user?.email?.split('@')[0]}
+                    </span>
+                    <span className="block text-[10px] font-semibold text-coral-500 uppercase tracking-wider">
+                      {role || 'Student'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={signOut}
+                    title="Sign Out"
+                    className="p-2 rounded-lg text-gray-500 hover:text-coral-500 hover:bg-gray-100 dark:hover:bg-navy-800 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-navy-100 hover:bg-navy-200 dark:bg-navy-800 dark:hover:bg-navy-700 text-navy-900 dark:text-white text-xs font-semibold transition-colors"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Sign In</span>
+                </Link>
+              )}
 
               {/* Dark/Light Mode Toggle */}
               <button
@@ -137,6 +165,38 @@ export default function RootLayout() {
                 </Link>
               );
             })}
+
+            <div className="pt-3 border-t border-gray-100 dark:border-navy-800">
+              {isAuthenticated ? (
+                <div className="flex items-center justify-between px-3 py-2">
+                  <div>
+                    <span className="block text-sm font-bold text-gray-900 dark:text-white">
+                      {profile?.full_name || user?.email}
+                    </span>
+                    <span className="block text-xs text-coral-500">{role || 'Student'}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      signOut();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-coral-500 text-white text-xs font-semibold"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-coral-500 text-white font-medium text-sm"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Sign In
+                </Link>
+              )}
+            </div>
           </div>
         )}
       </header>

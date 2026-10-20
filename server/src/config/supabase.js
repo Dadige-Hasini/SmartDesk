@@ -5,28 +5,45 @@ import { logger } from '../utils/logger.js';
 let supabaseClient = null;
 let supabaseAdmin = null;
 
-try {
-  if (config.supabase.url && config.supabase.anonKey) {
-    supabaseClient = createClient(config.supabase.url, config.supabase.anonKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    });
-  }
+const hasBasicConfig = Boolean(config.supabase.url && config.supabase.publishableKey);
+const hasAdminConfig = Boolean(config.supabase.url && config.supabase.secretKey);
 
-  if (config.supabase.url && config.supabase.serviceRoleKey) {
-    supabaseAdmin = createClient(config.supabase.url, config.supabase.serviceRoleKey, {
+if (hasBasicConfig) {
+  try {
+    supabaseClient = createClient(config.supabase.url, config.supabase.publishableKey, {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
       },
     });
-  } else {
-    logger.warn('SUPABASE_SERVICE_ROLE_KEY is not set. Administrative database operations will be restricted.');
+  } catch (err) {
+    logger.error('Failed to initialize public Supabase client', { error: err.message });
   }
-} catch (err) {
-  logger.error('Failed to initialize Supabase client', { error: err.message });
+} else {
+  logger.warn('SUPABASE_URL or SUPABASE_PUBLISHABLE_KEY is not set. Supabase public client is uninitialized.');
+}
+
+if (hasAdminConfig) {
+  try {
+    supabaseAdmin = createClient(config.supabase.url, config.supabase.secretKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
+  } catch (err) {
+    logger.error('Failed to initialize admin Supabase client', { error: err.message });
+  }
+} else {
+  logger.warn('SUPABASE_SECRET_KEY is not set. Administrative database operations will be restricted.');
+}
+
+export function isSupabaseConfigured() {
+  return Boolean(supabaseClient);
+}
+
+export function isSupabaseAdminConfigured() {
+  return Boolean(supabaseAdmin);
 }
 
 export { supabaseClient, supabaseAdmin };

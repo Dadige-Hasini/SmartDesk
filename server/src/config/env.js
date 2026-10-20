@@ -12,13 +12,13 @@ dotenv.config();
 export const config = {
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT || '5000', 10),
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  clientUrl: process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:5173',
 
   supabase: {
-    url: process.env.SUPABASE_URL || 'https://placeholder-project.supabase.co',
-    anonKey: process.env.SUPABASE_ANON_KEY || 'placeholder-anon-key',
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-    jwtSecret: process.env.SUPABASE_JWT_SECRET || 'placeholder-jwt-secret',
+    url: process.env.SUPABASE_URL || '',
+    publishableKey: process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || '',
+    secretKey: process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+    jwtSecret: process.env.SUPABASE_JWT_SECRET || '',
     storage: {
       attachmentsBucket: process.env.SUPABASE_STORAGE_BUCKET_ATTACHMENTS || 'ticket-attachments',
       documentsBucket: process.env.SUPABASE_STORAGE_BUCKET_DOCUMENTS || 'knowledge-documents',
