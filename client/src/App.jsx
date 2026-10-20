@@ -15,6 +15,8 @@ import StudentDashboardPage from './pages/StudentDashboardPage';
 import CreateTicketPage from './pages/CreateTicketPage';
 import ProfilePage from './pages/ProfilePage';
 import NotificationsPage from './pages/NotificationsPage';
+import StaffDashboardPage from './pages/StaffDashboardPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const queryClient = new QueryClient({
@@ -54,6 +56,22 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <StudentDashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="staff"
+                  element={
+                    <ProtectedRoute allowedRoles={['STAFF', 'SUPER_ADMIN']}>
+                      <StaffDashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="admin"
+                  element={
+                    <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
+                      <AdminDashboardPage />
                     </ProtectedRoute>
                   }
                 />

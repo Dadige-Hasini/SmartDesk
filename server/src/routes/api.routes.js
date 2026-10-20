@@ -3,6 +3,9 @@ import healthRoutes from './health.routes.js';
 import authRoutes from './auth.routes.js';
 import ticketRoutes from './ticket.routes.js';
 import notificationRoutes from './notification.routes.js';
+import adminRoutes from './admin.routes.js';
+import staffRoutes from './staff.routes.js';
+import announcementRoutes from './announcement.routes.js';
 import { sendSuccess } from '../utils/response.js';
 
 const router = Router();
@@ -18,6 +21,15 @@ router.use('/tickets', ticketRoutes);
 
 // Notifications and User Preferences routes
 router.use('/notifications', notificationRoutes);
+
+// Phase 5: Super Admin Management routes
+router.use('/admin', adminRoutes);
+
+// Phase 5: Staff Department Portal routes
+router.use('/staff', staffRoutes);
+
+// Phase 5: Public/User Announcements
+router.use('/announcements', announcementRoutes);
 
 // Root API information
 router.get('/', (req, res) => {

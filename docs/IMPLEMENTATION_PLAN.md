@@ -207,5 +207,16 @@ SmartDesk is an AI-powered college student support portal built with modern full
     - In-app Notifications Dropdown (`NotificationsBell.jsx`), Notifications Center (`NotificationsPage.jsx`), and Event Preferences modal.
     - Timezone standardization: All UI timestamps formatted in `Asia/Kolkata` (`IST`, UTC+05:30) while persisting UTC timestamps.
     - Persistent Dark/Light theme mode.
-    - 100% test pass rate (51 backend tests, 12 client tests) and clean production build.
-- **Next Phase**: Phase 5 (AI Assistant & Deep Learning Integration: Document Chunking, pgvector Embeddings, Grounded RAG, and Intent Classifier).
+    - **Phase 5**: Staff & Super Admin Portals, Metrics & Governance
+    - Departmental ticket queue with strict departmental isolation and multi-factor sorting (priority, age, SLA deadline).
+    - Queue filtering by status, priority, category, assignee, date range, and keyword search.
+    - Quick ticket claim, single assignment, and bulk multi-ticket assignment.
+    - Status management with mandatory resolution summaries and rejection reasons.
+    - Recharts visual analytics: Tickets-over-time line chart (14-day window), category distribution pie chart, and status breakdown donut chart.
+    - Real-time KPI cards: Average response time, average resolution time, SLA compliance rate, and satisfaction scores.
+    - Super Admin Operations Center (`/admin`): Global university-wide stats, department-wise performance scorecard, staff account approvals, suspensions with mandatory reason, and document approval permission toggling (`can_approve_documents`).
+    - Administrative management for departments, categories, routing rules, SLA policies, and campus bulletins/announcements with audience visibility.
+    - Server-side scheduled SLA watchdog daemon (`sla.worker.js`) running every 30 seconds independently of browser sessions.
+    - Formal metric definitions document (`docs/PHASE5_METRICS_AND_GOVERNANCE.md`) detailing treatment of reopened tickets, paused SLAs (`AWAITING_INFO`), and unresolved cases.
+    - 100% test pass rate across backend (64 tests across 6 suites) and client (18 tests across 4 suites) with clean production build.
+- **Next Phase**: Phase 6 (AI Assistant & Deep Learning Integration: Document Chunking, pgvector Embeddings, Grounded RAG, and Intent Classifier).

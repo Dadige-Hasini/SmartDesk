@@ -19,6 +19,8 @@ import {
   LogOut,
   LogIn,
   User,
+  Building2,
+  ShieldCheck,
 } from 'lucide-react';
 
 export default function RootLayout() {
@@ -27,19 +29,37 @@ export default function RootLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
-  const navigation = isAuthenticated
-    ? [
-        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-        { name: 'My Tickets', href: '/tickets', icon: Ticket },
-        { name: 'New Ticket', href: '/tickets/new', icon: PlusCircle },
-        { name: 'AI Assistant', href: '/ai-chat', icon: Bot, badge: 'Phase 6' },
-        { name: 'Profile', href: '/profile', icon: User },
-      ]
-    : [
-        { name: 'Home', href: '/', icon: Home },
-        { name: 'AI Assistant', href: '/ai-chat', icon: Bot, badge: 'RAG' },
-        { name: 'Tickets', href: '/tickets', icon: Ticket },
-      ];
+  let navigation = [];
+  if (!isAuthenticated) {
+    navigation = [
+      { name: 'Home', href: '/', icon: Home },
+      { name: 'AI Assistant', href: '/ai-chat', icon: Bot, badge: 'Phase 6' },
+      { name: 'Tickets', href: '/tickets', icon: Ticket },
+    ];
+  } else if (role === 'SUPER_ADMIN') {
+    navigation = [
+      { name: 'Admin Console', href: '/admin', icon: ShieldCheck },
+      { name: 'Staff Queue', href: '/staff', icon: Building2 },
+      { name: 'All Tickets', href: '/tickets', icon: Ticket },
+      { name: 'Profile', href: '/profile', icon: User },
+    ];
+  } else if (role === 'STAFF') {
+    navigation = [
+      { name: 'Department Queue', href: '/staff', icon: Building2 },
+      { name: 'My Tickets', href: '/tickets', icon: Ticket },
+      { name: 'New Ticket', href: '/tickets/new', icon: PlusCircle },
+      { name: 'Profile', href: '/profile', icon: User },
+    ];
+  } else {
+    // Default student navigation
+    navigation = [
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'My Tickets', href: '/tickets', icon: Ticket },
+      { name: 'New Ticket', href: '/tickets/new', icon: PlusCircle },
+      { name: 'AI Assistant', href: '/ai-chat', icon: Bot, badge: 'Phase 6' },
+      { name: 'Profile', href: '/profile', icon: User },
+    ];
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-navy-950 text-gray-900 dark:text-gray-100">
