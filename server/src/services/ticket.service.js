@@ -1,5 +1,6 @@
 import { ticketRepository } from '../repositories/ticket.repository.js';
 import { supabaseAdmin, supabaseClient } from '../config/supabase.js';
+import { NotificationService } from './notification.service.js';
 import { logger } from '../utils/logger.js';
 
 export const ALLOWED_STATUS_TRANSITIONS = {
@@ -74,6 +75,19 @@ export class TicketService {
         assignedDepartmentId: newTicket.assigned_department_id,
       },
       note: 'Ticket opened by user',
+    });
+
+    // Notify ticket creator of successful creation
+    await NotificationService.notifyUser({
+      recipientId: creatorProfile.id,
+      recipientEmail: creatorProfile.email,
+      recipientName: creatorProfile.full_name,
+      ticket: newTicket,
+      eventType: 'TICKET_CREATED',
+      title: `Ticket Created: #${newTicket.ticket_number}`,
+      message: `Your ticket "${newTicket.title}" has been submitted successfully.`,
+      actorName: creatorProfile.full_name,
+      dedupKeySuffix: 'created',
     });
 
     return newTicket;
@@ -200,6 +214,30 @@ export class TicketService {
       note: note || `Status changed from ${currentStatus} to ${nextStatus}`,
     });
 
+    // Notify student creator about status change / resolution
+    if (ticket.created_by) {
+      const creator = await ticketRepository.findProfileById(ticket.created_by);
+      if (creator) {
+        const isResolved = nextStatus === 'RESOLVED';
+        await NotificationService.notifyUser({
+          recipientId: creator.id,
+          recipientEmail: creator.email,
+          recipientName: creator.full_name,
+          ticket: updatedTicket,
+          eventType: isResolved ? 'RESOLVED' : 'STATUS_CHANGED',
+          title: isResolved
+            ? `Ticket #${ticket.ticket_number} Resolved`
+            : `Ticket #${ticket.ticket_number} Status: ${nextStatus}`,
+          message: isResolved
+            ? `Your ticket has been marked as resolved: ${resolutionSummary}`
+            : `Status updated to ${nextStatus}`,
+          actorName: profile.full_name,
+          note: isResolved ? resolutionSummary : note,
+          dedupKeySuffix: `${nextStatus}-${Date.now()}`,
+        });
+      }
+    }
+
     return updatedTicket;
   }
 
@@ -310,6 +348,19 @@ export class TicketService {
       note: note || `Assigned to ${targetProfile.full_name}`,
     });
 
+    await NotificationService.notifyUser({
+      recipientId: targetProfile.id,
+      recipientEmail: targetProfile.email,
+      recipientName: targetProfile.full_name,
+      ticket: updatedTicket,
+      eventType: 'ASSIGNED',
+      title: `Assigned: Ticket #${ticket.ticket_number}`,
+      message: `You have been assigned to resolve ticket: ${ticket.title}`,
+      actorName: profile.full_name,
+      note,
+      dedupKeySuffix: `assigned-${assignedTo}-${Date.now()}`,
+    });
+
     return updatedTicket;
   }
 
@@ -377,6 +428,24 @@ export class TicketService {
       newValue: { status: 'IN_PROGRESS', reopened_count: updates.reopened_count },
       note: reason,
     });
+
+    if (ticket.assigned_to) {
+      const assignedStaff = await ticketRepository.findProfileById(ticket.assigned_to);
+      if (assignedStaff) {
+        await NotificationService.notifyUser({
+          recipientId: assignedStaff.id,
+          recipientEmail: assignedStaff.email,
+          recipientName: assignedStaff.full_name,
+          ticket: updatedTicket,
+          eventType: 'REOPENED',
+          title: `Ticket #${ticket.ticket_number} Reopened`,
+          message: `Student reopened ticket: ${reason}`,
+          actorName: profile.full_name,
+          note: reason,
+          dedupKeySuffix: `reopened-${updates.reopened_count}`,
+        });
+      }
+    }
 
     return updatedTicket;
   }

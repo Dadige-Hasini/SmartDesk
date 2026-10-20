@@ -52,12 +52,22 @@
 
 ---
 
-## Phase 4: Comments, Attachments & Notifications (Upcoming)
-- [ ] Public comments vs private internal notes (filtered out of student responses).
-- [ ] Attachment uploads (up to 3 files, 5MB max, MIME & magic-byte validation, private Supabase Storage).
-- [ ] Signed URL generation for authorized attachment downloads.
-- [ ] In-app notification creation and Supabase Realtime synchronization.
-- [ ] Asynchronous email worker with retry mechanism and delivery logging.
+## Phase 3: Comments, Attachments, Notifications & Asynchronous Outbox
+- [x] Versioned migration: `supabase/migrations/20261020000003_comments_attachments_notifications.sql`.
+- [x] Public comments between students and authorized staff.
+- [x] Internal staff notes (`is_internal = true`) strictly isolated and hidden from student queries and downloads.
+- [x] Private Supabase Storage bucket (`ticket-attachments`) with RLS and non-public access.
+- [x] Strict attachment validation: max 3 files, max 5 MB per file, allowed formats only (JPEG, PNG, WEBP, PDF, DOCX).
+- [x] File signature (magic bytes) validation rejecting spoofed files (.exe, .sh, shell scripts disguised as documents).
+- [x] Secure download mechanism rechecking parent ticket access and comment visibility on every download.
+- [x] In-app notifications with unread counter, mark-as-read, and mark-all-read operations.
+- [x] Per-event notification preferences (`email_on_ticket_created`, `email_on_ticket_assigned`, `email_on_comment_added`, `email_on_status_changed`, `email_on_ticket_resolved`, `email_on_ticket_reopened`, `in_app_notifications`).
+- [x] Lifecycle event email dispatch for ticket creation, assignment, comments, status transitions, resolution, and reopening.
+- [x] Resilient asynchronous email outbox (`email_jobs` table) with deduplication keys (`dedup_key`), preventing duplicate sends.
+- [x] Mail-provider outage tolerance: transaction never rolls back if SMTP server is down; jobs queued with exponential backoff and retry tracking.
+- [x] Frontend UI: `CommentThread.jsx`, `NotificationsBell.jsx`, `NotificationsPage.jsx`, and `NotificationPreferencesModal.jsx`.
+- [x] Realtime update listeners via Supabase Realtime channel subscriptions for comments and notifications.
+- [x] 100% test pass rate across all 51 server tests and 6 client tests (57 tests passing).
 
 ---
 

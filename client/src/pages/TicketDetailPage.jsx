@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import CommentThread from '../components/CommentThread';
 import {
   ArrowLeft,
   Clock,
@@ -442,6 +443,9 @@ export default function TicketDetailPage() {
           )}
         </div>
       )}
+
+      {/* Phase 3: Discussion & Internal Notes */}
+      <CommentThread ticketId={ticket.id} isClosed={ticket.status === 'CLOSED'} />
 
       {/* Audit History / Event Timeline */}
       <div className="p-6 rounded-3xl bg-white dark:bg-navy-900 border border-gray-200 dark:border-navy-800 shadow-sm space-y-4">

@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import { ticketController } from '../controllers/ticket.controller.js';
+import { CommentController } from '../controllers/comment.controller.js';
+import { AttachmentController } from '../controllers/attachment.controller.js';
+import { uploadAttachmentsMiddleware } from '../middlewares/upload.middleware.js';
 import { requireAuth, requireActiveUser, requireRole } from '../middleware/auth.js';
 
 const router = Router();
@@ -38,5 +41,20 @@ router.post('/:id/assign', requireRole('STAFF', 'SUPER_ADMIN'), (req, res, next)
 );
 router.post('/:id/reopen', (req, res, next) => ticketController.reopenTicket(req, res, next));
 router.post('/:id/rate', (req, res, next) => ticketController.rateTicket(req, res, next));
+
+// Phase 3: Comments & Internal Notes
+router.get('/:id/comments', (req, res, next) => CommentController.listComments(req, res, next));
+router.post('/:id/comments', uploadAttachmentsMiddleware, (req, res, next) =>
+  CommentController.createComment(req, res, next)
+);
+
+// Phase 3: Attachments & Secure Downloads
+router.get('/:id/attachments', (req, res, next) => AttachmentController.list(req, res, next));
+router.post('/:id/attachments', uploadAttachmentsMiddleware, (req, res, next) =>
+  AttachmentController.upload(req, res, next)
+);
+router.get('/:id/attachments/:attachmentId/download', (req, res, next) =>
+  AttachmentController.download(req, res, next)
+);
 
 export default router;

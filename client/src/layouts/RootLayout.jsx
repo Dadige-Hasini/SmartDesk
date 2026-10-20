@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import NotificationsBell from '../components/NotificationsBell';
 import {
   Sun,
   Moon,
@@ -81,8 +82,11 @@ export default function RootLayout() {
               })}
             </nav>
 
-            {/* Right Actions: Auth Status, Theme Toggle */}
+            {/* Right Actions: Auth Status, Notifications, Theme Toggle */}
             <div className="flex items-center gap-3">
+              {/* In-app Notifications Bell */}
+              <NotificationsBell />
+
               {/* User Authentication Status */}
               {isAuthenticated ? (
                 <div className="hidden sm:flex items-center gap-2.5 pl-2">
