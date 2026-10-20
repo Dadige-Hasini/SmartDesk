@@ -21,6 +21,7 @@ import {
   History,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { formatToIST } from '../utils/date';
 
 export default function TicketDetailPage() {
   const { id } = useParams();
@@ -242,7 +243,7 @@ export default function TicketDetailPage() {
             {ticket.title}
           </h1>
           <p className="text-xs text-gray-400 mt-1">
-            Raised on {new Date(ticket.created_at).toLocaleString()} by{' '}
+            Raised on {formatToIST(ticket.created_at)} by{' '}
             <strong>{ticket.creator?.full_name || 'Student'}</strong>
           </p>
         </div>
@@ -268,7 +269,7 @@ export default function TicketDetailPage() {
             <span className="text-gray-400 uppercase font-semibold text-[10px]">SLA Due Date</span>
             <div className="font-bold text-amber-500 flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5" />
-              <span>{ticket.sla_due_at ? new Date(ticket.sla_due_at).toLocaleString() : 'Standard SLA'}</span>
+              <span>{ticket.sla_due_at ? formatToIST(ticket.sla_due_at) : 'Standard SLA'}</span>
             </div>
           </div>
         </div>
@@ -466,7 +467,7 @@ export default function TicketDetailPage() {
                     {evt.event_type.replace(/_/g, ' ')}
                   </span>
                   <span className="text-[11px] text-gray-400">
-                    {new Date(evt.created_at).toLocaleString()}
+                    {formatToIST(evt.created_at)}
                   </span>
                 </div>
                 {evt.actor && (

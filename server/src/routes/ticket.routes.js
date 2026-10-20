@@ -13,6 +13,7 @@ router.use(requireActiveUser);
 
 // Metadata & Utilities
 router.get('/meta/categories', (req, res, next) => ticketController.getCategories(req, res, next));
+router.get('/stats/dashboard', (req, res, next) => ticketController.getDashboardStats(req, res, next));
 router.get('/export/csv', requireRole('STAFF', 'SUPER_ADMIN'), (req, res, next) =>
   ticketController.exportCsv(req, res, next)
 );

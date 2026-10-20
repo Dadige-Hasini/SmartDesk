@@ -184,8 +184,28 @@ SmartDesk is an AI-powered college student support portal built with modern full
     - Server-side Supabase client with role separation (`server/src/config/supabase.js`).
     - Environment templates configured with `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `CLIENT_URL`, `PORT`.
     - Native Supabase Auth token validation and RBAC middleware (`server/src/middleware/auth.js`).
-    - Versioned SQL migrations for `departments` and `profiles` with least-privilege RLS policies and auth trigger (`supabase/migrations/20261020000001_departments_and_profiles.sql`).
-    - Frontend route protection foundation (`ProtectedRoute.jsx`, `LoginPage.jsx`, `RegisterPage.jsx`).
-    - Super Admin provisioning script (`scripts/provision-super-admin.js`) and documentation (`docs/supabase_setup.md`).
-    - Full test suite passing (20/20 unit/integration tests).
-- **Next Phase**: Full Phase 1 (Remaining Database Schema Tables: categories, routing rules, tickets, comments, attachments, vector index, and seed scripts).
+    - Versioned SQL migrations for `departments` and `profiles` with least-privilege RLS policies and auth trigger.
+  - **Phase 2**: Complete SmartDesk Ticket System
+    - Dynamic category-to-department routing rules.
+    - Transactional human-readable ticket ID generation (`TKT-YYYYMMDD-XXXX`).
+    - Deterministic finite-state machine (`OPEN`, `IN_PROGRESS`, `AWAITING_INFO`, `RESOLVED`, `CLOSED`, `REJECTED`).
+    - Append-only ticket event auditing, staff claim, resolution summaries, and rejection reasons.
+    - Single reopening within 7 days rule.
+    - Star ratings (1-5) and feedback collection.
+    - URL query-synced filtering, sorting, pagination, and authorized CSV export.
+  - **Phase 3**: Comments, Attachments, Notifications & Email Outbox
+    - Public comments and isolated staff internal notes.
+    - Magic-byte file validator for PDF, DOCX, PNG, JPEG, WEBP with 5 MB / 3 files limit.
+    - In-app notification creation with unread counter and mark-as-read.
+    - Per-event email notification preferences and outbox table (`email_jobs`) with deduplication.
+  - **Phase 4**: Complete SmartDesk Student Experience
+    - Student Dashboard (`/dashboard`) powered by real API data (`totalTickets`, `openTickets`, `resolvedTickets`, `averageResolutionTime`).
+    - Dedicated Create Ticket Page & Form (`/tickets/new`) with field-level validation and drag-and-drop attachments.
+    - My Tickets queue (`/tickets`) with live search, URL-synced filters, sorting, and pagination.
+    - Ticket Detail View (`/tickets/:id`) with activity timeline, public discussion, rating widget, and reopening support.
+    - Student Profile Page (`/profile`) with verified academic records and contact details editor.
+    - In-app Notifications Dropdown (`NotificationsBell.jsx`), Notifications Center (`NotificationsPage.jsx`), and Event Preferences modal.
+    - Timezone standardization: All UI timestamps formatted in `Asia/Kolkata` (`IST`, UTC+05:30) while persisting UTC timestamps.
+    - Persistent Dark/Light theme mode.
+    - 100% test pass rate (51 backend tests, 12 client tests) and clean production build.
+- **Next Phase**: Phase 5 (AI Assistant & Deep Learning Integration: Document Chunking, pgvector Embeddings, Grounded RAG, and Intent Classifier).

@@ -15,6 +15,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { formatTimeOnlyIST } from '../utils/date';
 
 export default function NotificationsBell() {
   const { user, isAuthenticated } = useAuth();
@@ -234,10 +235,7 @@ export default function NotificationsBell() {
                       </p>
                       <span className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
                         <Clock className="w-2.5 h-2.5" />
-                        {new Date(notif.created_at).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                        {formatTimeOnlyIST(notif.created_at)}
                       </span>
                     </div>
                   </div>

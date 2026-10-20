@@ -11,6 +11,9 @@ import RegisterPage from './pages/RegisterPage';
 import NotFoundPage from './pages/NotFoundPage';
 import TicketsPage from './pages/TicketsPage';
 import TicketDetailPage from './pages/TicketDetailPage';
+import StudentDashboardPage from './pages/StudentDashboardPage';
+import CreateTicketPage from './pages/CreateTicketPage';
+import ProfilePage from './pages/ProfilePage';
 import NotificationsPage from './pages/NotificationsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -47,6 +50,14 @@ export default function App() {
                 <Route path="login" element={<LoginPage />} />
                 <Route path="register" element={<RegisterPage />} />
                 <Route
+                  path="dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <StudentDashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="ai-chat"
                   element={
                     <ProtectedRoute>
@@ -68,10 +79,26 @@ export default function App() {
                   }
                 />
                 <Route
+                  path="tickets/new"
+                  element={
+                    <ProtectedRoute>
+                      <CreateTicketPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="tickets/:id"
                   element={
                     <ProtectedRoute>
                       <TicketDetailPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="profile"
+                  element={
+                    <ProtectedRoute>
+                      <ProfilePage />
                     </ProtectedRoute>
                   }
                 />

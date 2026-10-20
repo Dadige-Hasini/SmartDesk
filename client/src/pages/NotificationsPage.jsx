@@ -16,6 +16,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { formatToIST } from '../utils/date';
 
 export default function NotificationsPage() {
   const { user, isAuthenticated } = useAuth();
@@ -219,10 +220,7 @@ export default function NotificationsPage() {
                   </p>
                   <span className="text-[11px] text-gray-400 flex items-center gap-1 pt-1">
                     <Clock className="w-3 h-3" />
-                    {new Date(notif.created_at).toLocaleString([], {
-                      dateStyle: 'medium',
-                      timeStyle: 'short',
-                    })}
+                    {formatToIST(notif.created_at)}
                   </span>
                 </div>
               </div>

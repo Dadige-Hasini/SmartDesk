@@ -18,6 +18,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { formatToIST } from '../utils/date';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 const MAX_FILES = 3;
@@ -255,12 +256,7 @@ export default function CommentThread({ ticketId, isClosed = false }) {
                     )}
                     <span className="text-[11px] text-gray-400 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      {new Date(comment.created_at).toLocaleString([], {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {formatToIST(comment.created_at)}
                     </span>
                   </div>
                 </div>

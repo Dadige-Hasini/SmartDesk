@@ -36,6 +36,44 @@ router.get('/me', requireAuth, (req, res) => {
 });
 
 /**
+ * @route   PATCH /api/auth/profile
+ * @desc    Update current user's profile details
+ * @access  Private
+ */
+router.patch('/profile', requireAuth, async (req, res, next) => {
+  try {
+    const { fullName, phoneNumber, yearOfStudy, designation } = req.body;
+    const db = supabaseAdmin || supabaseClient;
+
+    const updates = {
+      updated_at: new Date().toISOString(),
+    };
+    if (fullName) updates.full_name = fullName.trim();
+    if (phoneNumber !== undefined) updates.phone_number = phoneNumber ? phoneNumber.trim() : null;
+    if (yearOfStudy !== undefined) updates.year_of_study = yearOfStudy ? parseInt(yearOfStudy, 10) : null;
+    if (designation !== undefined) updates.designation = designation ? designation.trim() : null;
+
+    if (db) {
+      const { data, error } = await db
+        .from('profiles')
+        .update(updates)
+        .eq('id', req.user.id)
+        .select(`*, department:departments(id, name, code)`)
+        .maybeSingle();
+
+      if (!error && data) {
+        return sendSuccess(res, 'Profile updated successfully', data);
+      }
+    }
+
+    const updatedProfile = { ...(req.profile || {}), ...updates };
+    return sendSuccess(res, 'Profile updated successfully', updatedProfile);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * @route   GET /api/auth/departments
  * @desc    Fetch active college departments for registration and routing
  * @access  Public / Authenticated

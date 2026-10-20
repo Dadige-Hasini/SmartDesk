@@ -10,7 +10,9 @@ import {
   Menu,
   X,
   Home,
+  LayoutDashboard,
   Ticket,
+  PlusCircle,
   Bot,
   Bell,
   CheckCircle2,
@@ -25,12 +27,19 @@ export default function RootLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
-  const navigation = [
-    { name: 'Home', href: '/', icon: Home },
-    { name: 'AI Assistant', href: '/ai-chat', icon: Bot, badge: 'RAG' },
-    { name: 'Tickets', href: '/tickets', icon: Ticket },
-    { name: 'Notifications', href: '/notifications', icon: Bell },
-  ];
+  const navigation = isAuthenticated
+    ? [
+        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+        { name: 'My Tickets', href: '/tickets', icon: Ticket },
+        { name: 'New Ticket', href: '/tickets/new', icon: PlusCircle },
+        { name: 'AI Assistant', href: '/ai-chat', icon: Bot, badge: 'Phase 6' },
+        { name: 'Profile', href: '/profile', icon: User },
+      ]
+    : [
+        { name: 'Home', href: '/', icon: Home },
+        { name: 'AI Assistant', href: '/ai-chat', icon: Bot, badge: 'RAG' },
+        { name: 'Tickets', href: '/tickets', icon: Ticket },
+      ];
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-navy-950 text-gray-900 dark:text-gray-100">
@@ -90,14 +99,18 @@ export default function RootLayout() {
               {/* User Authentication Status */}
               {isAuthenticated ? (
                 <div className="hidden sm:flex items-center gap-2.5 pl-2">
-                  <div className="text-right">
+                  <Link
+                    to="/profile"
+                    className="text-right hover:opacity-80 transition-opacity"
+                    title="View Student Profile"
+                  >
                     <span className="block text-xs font-bold text-gray-900 dark:text-white leading-tight">
                       {profile?.full_name || user?.email?.split('@')[0]}
                     </span>
                     <span className="block text-[10px] font-semibold text-coral-500 uppercase tracking-wider">
                       {role || 'Student'}
                     </span>
-                  </div>
+                  </Link>
                   <button
                     type="button"
                     onClick={signOut}

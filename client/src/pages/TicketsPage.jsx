@@ -24,6 +24,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { formatToIST, formatRelativeIST } from '../utils/date';
 
 export default function TicketsPage() {
   const { user, profile, role } = useAuth();
@@ -259,7 +260,7 @@ export default function TicketsPage() {
 
           <button
             type="button"
-            onClick={() => setCreateModalOpen(true)}
+            onClick={() => navigate('/tickets/new')}
             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-coral-500 hover:bg-coral-600 text-white font-semibold text-sm shadow-md shadow-coral-500/20 transition-all hover:scale-105 active:scale-95 flex-1 sm:flex-initial"
           >
             <Plus className="w-4 h-4" />
@@ -455,7 +456,7 @@ export default function TicketsPage() {
                         )}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
-                        {new Date(t.created_at).toLocaleDateString()}
+                        <span title={formatToIST(t.created_at)}>{formatRelativeIST(t.created_at)}</span>
                       </td>
                     </tr>
                   );

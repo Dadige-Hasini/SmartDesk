@@ -231,6 +231,18 @@ export class TicketController {
       next(err);
     }
   }
+
+  /**
+   * GET /api/tickets/stats/dashboard
+   */
+  async getDashboardStats(req, res, next) {
+    try {
+      const stats = await ticketService.getDashboardStats(req.profile);
+      return sendSuccess(res, 'Dashboard statistics retrieved successfully', stats, 200);
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 export const ticketController = new TicketController();

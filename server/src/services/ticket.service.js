@@ -573,6 +573,84 @@ export class TicketService {
 
   // --- Security Helpers ---
 
+  /**
+   * Compute real dashboard statistics from real API data
+   */
+  async getDashboardStats(profile) {
+    const listResult = await this.listTickets({ limit: 1000 }, profile);
+    const tickets = listResult.tickets || [];
+
+    const totalTickets = tickets.length;
+    let openTickets = 0;
+    let resolvedTickets = 0;
+    let totalResolutionHours = 0;
+    let resolvedCountWithDuration = 0;
+
+    const byPriority = { Low: 0, Medium: 0, High: 0, Urgent: 0 };
+    const byStatus = {
+      OPEN: 0,
+      IN_PROGRESS: 0,
+      AWAITING_INFO: 0,
+      RESOLVED: 0,
+      CLOSED: 0,
+      REJECTED: 0,
+    };
+
+    for (const t of tickets) {
+      if (['OPEN', 'IN_PROGRESS', 'AWAITING_INFO'].includes(t.status)) {
+        openTickets += 1;
+      } else if (['RESOLVED', 'CLOSED'].includes(t.status)) {
+        resolvedTickets += 1;
+      }
+
+      if (byPriority[t.priority] !== undefined) {
+        byPriority[t.priority] += 1;
+      }
+      if (byStatus[t.status] !== undefined) {
+        byStatus[t.status] += 1;
+      }
+
+      // Calculate resolution time
+      if (['RESOLVED', 'CLOSED'].includes(t.status)) {
+        const resolvedTimestamp = new Date(t.resolved_at || t.closed_at || t.updated_at).getTime();
+        const createdTimestamp = new Date(t.created_at).getTime();
+        const durationHours = (resolvedTimestamp - createdTimestamp) / (1000 * 60 * 60);
+        if (durationHours > 0) {
+          totalResolutionHours += durationHours;
+          resolvedCountWithDuration += 1;
+        }
+      }
+    }
+
+    let averageResolutionHours = null;
+    let averageResolutionTime = 'N/A';
+
+    if (resolvedCountWithDuration > 0) {
+      const avg = totalResolutionHours / resolvedCountWithDuration;
+      averageResolutionHours = parseFloat(avg.toFixed(1));
+      if (avg < 1) {
+        averageResolutionTime = `${Math.round(avg * 60)} mins`;
+      } else if (avg < 24) {
+        averageResolutionTime = `${avg.toFixed(1)} hrs`;
+      } else {
+        averageResolutionTime = `${(avg / 24).toFixed(1)} days`;
+      }
+    }
+
+    const recentTickets = tickets.slice(0, 5);
+
+    return {
+      totalTickets,
+      openTickets,
+      resolvedTickets,
+      averageResolutionTime,
+      averageResolutionHours,
+      byPriority,
+      byStatus,
+      recentTickets,
+    };
+  }
+
   enforceReadAccess(ticket, profile) {
     if (profile.role === 'SUPER_ADMIN') return;
 
