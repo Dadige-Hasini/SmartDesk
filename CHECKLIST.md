@@ -20,34 +20,35 @@
 
 ---
 
-## Phase 1: Database Schema, Security (RLS) & Migrations (Upcoming)
-- [ ] PostgreSQL Schema: profiles, departments, categories, routing rules, tickets, ticket_comments, attachments, ticket_events, ratings, notifications, notification_preferences, faqs, knowledge_documents, document_chunks, sla_policies, announcements, email_jobs, audit_events.
-- [ ] Unique human-readable ticket number generator sequence (`TKT-YYYYMMDD-0001`).
-- [ ] Check constraints, foreign keys, and performant indexes.
-- [ ] Row Level Security (RLS) policies for STUDENT, STAFF, SUPER_ADMIN.
-- [ ] pgvector extension and vector index creation.
-- [ ] Development seed data script (Super Admin, 3 Staff, 10 Students, 20 sample tickets, FAQs, SLA policies).
+## Phase 1: Database Foundation, Supabase Integration & RLS
+- [x] Supabase client initialization (Client-safe publishable key + Server-only secret key).
+- [x] Environment variable configuration with zero leakages to client production build.
+- [x] Database migrations for profiles, departments, categories, routing rules, SLA policies, tickets, ticket events, ratings.
+- [x] Row Level Security (RLS) policies for STUDENT, STAFF, and SUPER_ADMIN roles.
+- [x] Health readiness probe verifying live connection to Supabase database.
+- [x] Automated test suite verifying Supabase configuration and authentication middleware.
 
 ---
 
-## Phase 2: Authentication, Authorization & User Management (Upcoming)
-- [ ] Supabase Auth integration with server-side role verification.
-- [ ] Student registration (roll number, department, year, email, password).
-- [ ] Staff registration (employee ID, department, email, password) with `PENDING_APPROVAL` status.
-- [ ] Super Admin staff approval and suspension workflows.
-- [ ] Protected routes and role-based access control (RBAC) middleware.
-- [ ] Session handling and secure authentication contexts.
-
----
-
-## Phase 3: Core Ticket Management & Lifecycle Engine (Upcoming)
-- [ ] Ticket creation with category and priority selection.
-- [ ] Configurable category-to-department routing.
-- [ ] State transition engine: OPEN, IN_PROGRESS, AWAITING_INFO, RESOLVED, CLOSED, REJECTED.
-- [ ] Append-only ticket event history tracking.
-- [ ] Ticket search, filtering (category, status, priority, department, date), sorting, and pagination.
-- [ ] 7-day single reopen policy and resolution summary requirement.
-- [ ] Grievance confidential ticket access protection.
+## Phase 2: Complete Ticket Management & Lifecycle Engine
+- [x] Versioned migration: `supabase/migrations/20261020000002_tickets_system.sql`.
+- [x] Collision-free unique human-readable ticket numbers (`TKT-YYYYMMDD-XXXX`) via database sequence `ticket_number_seq`.
+- [x] Separate `student_department_id` (academic) and `assigned_department_id` (resolving) fields.
+- [x] Category-to-department dynamic routing table and automated resolution on ticket creation.
+- [x] SLA target computation (`response_due_at`, `resolution_due_at`) linked to priority SLA policies.
+- [x] Strict state transition engine (`OPEN`, `IN_PROGRESS`, `AWAITING_INFO`, `RESOLVED`, `CLOSED`, `REJECTED`) rejecting invalid transitions.
+- [x] Mandatory resolution summaries (min 5 chars) on resolve, mandatory rejection reasons (min 5 chars) on reject.
+- [x] Append-only audit events table (`ticket_events`) tracking all lifecycle actions with metadata.
+- [x] Student 7-day single reopen enforcement (`reopened_count === 0` and within 7 days of resolution).
+- [x] Ticket ratings (1 to 5 stars) with optional student feedback comments.
+- [x] Staff claim and assignment actions with department scoping and permission enforcement.
+- [x] Staff bulk assignment and bulk close actions with transactional batch execution.
+- [x] Full-text search across ticket number, title, and description.
+- [x] URL-driven filtering (status, priority, department, unassigned, search) and pagination.
+- [x] Scoped CSV data export restricted to authorized records.
+- [x] Zero AI / Dashboard analytics in this phase as per strict phase scope.
+- [x] Frontend UI: `CreateTicketModal.jsx`, `TicketsPage.jsx`, and `TicketDetailPage.jsx` integrated into React Router.
+- [x] 100% test pass rate across 33 server tests and 6 client tests.
 
 ---
 

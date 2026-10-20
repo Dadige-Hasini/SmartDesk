@@ -9,6 +9,8 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import NotFoundPage from './pages/NotFoundPage';
+import TicketsPage from './pages/TicketsPage';
+import TicketDetailPage from './pages/TicketDetailPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const queryClient = new QueryClient({
@@ -60,12 +62,15 @@ export default function App() {
                   path="tickets"
                   element={
                     <ProtectedRoute>
-                      <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-2xl border border-gray-200 dark:border-navy-800">
-                        <h2 className="text-2xl font-bold mb-2">Ticket Management System</h2>
-                        <p className="text-gray-500">
-                          Core ticket lifecycle and departmental routing scheduled for Phase 3.
-                        </p>
-                      </div>
+                      <TicketsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="tickets/:id"
+                  element={
+                    <ProtectedRoute>
+                      <TicketDetailPage />
                     </ProtectedRoute>
                   }
                 />
