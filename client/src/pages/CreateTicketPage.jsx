@@ -228,7 +228,7 @@ export default function CreateTicketPage() {
         isConfidential,
       });
 
-      const newTicket = ticketRes.data.data;
+      const newTicket = ticketRes?.data?.data || ticketRes?.data || ticketRes;
 
       // 2. Upload attachments if present
       if (selectedFiles.length > 0 && newTicket?.id) {
@@ -244,11 +244,16 @@ export default function CreateTicketPage() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
       queryClient.invalidateQueries({ queryKey: ['student-dashboard-stats'] });
-      toast.success(`Ticket #${data.ticket_number} created successfully!`);
-      navigate(`/tickets/${data.id}`);
+      const ticketNum = data?.ticket_number || data?.id || '';
+      toast.success(ticketNum ? `Ticket #${ticketNum} created successfully!` : 'Ticket created successfully!');
+      if (data?.id) {
+        navigate(`/tickets/${data.id}`);
+      } else {
+        navigate('/tickets');
+      }
     },
     onError: (err) => {
-      const msg = err.response?.data?.message || 'Failed to raise ticket.';
+      const msg = err?.message || err?.response?.data?.message || err?.error?.message || 'Failed to raise ticket.';
       toast.error(msg);
     },
   });

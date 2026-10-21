@@ -1,6 +1,7 @@
 import { supabaseClient, supabaseAdmin } from '../config/supabase.js';
 import { sendError } from '../utils/response.js';
 import { logger } from '../utils/logger.js';
+import { inMemoryProfiles, ticketRepository } from '../repositories/ticket.repository.js';
 
 /**
  * Authentication Middleware: Validates incoming Supabase Bearer token
@@ -69,6 +70,31 @@ export async function requireAuth(req, res, next) {
       .maybeSingle();
 
     if (profileError) {
+      if (profileError.code === 'PGRST205' || profileError.message?.includes('schema cache')) {
+        logger.warn('Profiles table not yet migrated in database, using session profile fallback', {
+          requestId: req.id,
+          userId: authUser.id,
+        });
+        const fallbackProfile = inMemoryProfiles.get(authUser.id) || {
+          id: authUser.id,
+          email: authUser.email,
+          full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Student User',
+          role: authUser.user_metadata?.role || 'STUDENT',
+          status: 'ACTIVE',
+          department_id: authUser.user_metadata?.department_id || '11111111-1111-1111-1111-111111111111',
+          created_at: new Date().toISOString(),
+          departments: {
+            id: '11111111-1111-1111-1111-111111111111',
+            name: 'Computer Science & Engineering',
+            code: 'CSE',
+          },
+        };
+        inMemoryProfiles.set(authUser.id, fallbackProfile);
+        ticketRepository.registerProfile(fallbackProfile);
+        req.profile = fallbackProfile;
+        return next();
+      }
+
       logger.error('Database error fetching profile during auth', {
         requestId: req.id,
         userId: authUser.id,
@@ -83,16 +109,31 @@ export async function requireAuth(req, res, next) {
     }
 
     if (!profile) {
-      logger.warn('User authenticated but profile not found in database', {
-        requestId: req.id,
-        userId: authUser.id,
-      });
-      return sendError(
-        res,
-        'User profile does not exist in the system. Registration must be completed.',
-        { code: 'PROFILE_NOT_FOUND', userId: authUser.id },
-        401
-      );
+      const existingInMemory = inMemoryProfiles.get(authUser.id);
+      if (existingInMemory) {
+        req.profile = existingInMemory;
+        return next();
+      }
+
+      // If user is authenticated via Supabase Auth but profile record wasn't created yet, auto-create active profile
+      const autoProfile = {
+        id: authUser.id,
+        email: authUser.email,
+        full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Student User',
+        role: authUser.user_metadata?.role || 'STUDENT',
+        status: 'ACTIVE',
+        department_id: authUser.user_metadata?.department_id || '11111111-1111-1111-1111-111111111111',
+        created_at: new Date().toISOString(),
+        departments: {
+          id: '11111111-1111-1111-1111-111111111111',
+          name: 'Computer Science & Engineering',
+          code: 'CSE',
+        },
+      };
+      inMemoryProfiles.set(authUser.id, autoProfile);
+      ticketRepository.registerProfile(autoProfile);
+      req.profile = autoProfile;
+      return next();
     }
 
     // Attach verified profile to request

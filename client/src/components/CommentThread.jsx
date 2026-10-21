@@ -40,9 +40,9 @@ export default function CommentThread({ ticketId, isClosed = false }) {
   // Load comments
   const loadComments = async () => {
     try {
-      const res = await api.get(`/tickets/${ticketId}/comments`);
-      if (res?.data?.data?.comments) {
-        setComments(res.data.data.comments);
+      const payload = res?.data?.data || res?.data || res;
+      if (payload?.comments) {
+        setComments(payload.comments);
       }
     } catch (err) {
       toast.error('Failed to load discussion comments');
@@ -140,8 +140,9 @@ export default function CommentThread({ ticketId, isClosed = false }) {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      if (res?.data?.data?.comment) {
-        setComments((prev) => [...prev, res.data.data.comment]);
+      const payload = res?.data?.data || res?.data || res;
+      if (payload?.comment) {
+        setComments((prev) => [...prev, payload.comment]);
       }
 
       setContent('');
@@ -149,7 +150,7 @@ export default function CommentThread({ ticketId, isClosed = false }) {
       setIsInternal(false);
       toast.success(isInternal ? 'Internal note added' : 'Comment posted');
     } catch (err) {
-      const msg = err.response?.data?.message || 'Failed to submit comment.';
+      const msg = err?.message || err?.response?.data?.message || 'Failed to submit comment.';
       toast.error(msg);
     } finally {
       setSubmitting(false);

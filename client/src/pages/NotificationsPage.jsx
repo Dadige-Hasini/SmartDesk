@@ -37,10 +37,11 @@ export default function NotificationsPage() {
       const res = await api.get(
         `/notifications?page=${page}&limit=${limit}&unreadOnly=${unreadOnly}`
       );
-      if (res?.data?.data) {
-        setNotifications(res.data.data.items || []);
-        setTotal(res.data.data.total || 0);
-        setUnreadCount(res.data.data.unreadCount || 0);
+      const payload = res?.data?.data || res?.data || res;
+      if (payload) {
+        setNotifications(payload.items || []);
+        setTotal(payload.total || 0);
+        setUnreadCount(payload.unreadCount || 0);
       }
     } catch (err) {
       toast.error('Failed to load notifications');

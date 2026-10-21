@@ -33,9 +33,10 @@ export default function NotificationsBell() {
     if (!isAuthenticated) return;
     try {
       const res = await api.get('/notifications?limit=10');
-      if (res?.data?.data) {
-        setNotifications(res.data.data.items || []);
-        setUnreadCount(res.data.data.unreadCount || 0);
+      const payload = res?.data?.data || res?.data || res;
+      if (payload) {
+        setNotifications(payload.items || []);
+        setUnreadCount(payload.unreadCount || 0);
       }
     } catch {
       // Quiet fail on background poll

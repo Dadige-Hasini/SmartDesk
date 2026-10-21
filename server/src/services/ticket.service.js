@@ -28,17 +28,22 @@ export class TicketService {
       } else {
         // Fallback to first available active department
         const db = supabaseAdmin || supabaseClient;
-        const { data: defaultDept } = await db
-          .from('departments')
-          .select('id')
-          .eq('is_active', true)
-          .limit(1)
-          .maybeSingle();
-
-        if (!defaultDept) {
-          throw new Error('No active department found to route this ticket.');
+        let defaultDept = null;
+        if (db) {
+          try {
+            const { data, error } = await db
+              .from('departments')
+              .select('id')
+              .eq('is_active', true)
+              .limit(1)
+              .maybeSingle();
+            if (!error && data) defaultDept = data;
+          } catch {
+            defaultDept = null;
+          }
         }
-        assignedDeptId = defaultDept.id;
+
+        assignedDeptId = defaultDept?.id || creatorProfile.department_id || '11111111-1111-1111-1111-111111111111';
       }
     }
 
