@@ -1,0 +1,522 @@
+{
+  "evaluation_metadata": {
+    "model_name": "SmartDesk-Embedding-Prototype-v1",
+    "model_version": "1.0.0",
+    "dataset_version": "v1.0.0",
+    "evaluation_date": "2026-10-21T07:20:03.908Z",
+    "seed": 42,
+    "hardware_environment": "13th Gen Intel(R) Core(TM) i5-1335U (12 cores), win32 x64",
+    "split_strategy": "Stratified 70/15/15 with Near-Duplicate Token Jaccard Leakage Guard",
+    "num_samples": 200,
+    "train_samples": 140,
+    "val_samples": 30,
+    "test_samples": 30,
+    "num_classes": 10
+  },
+  "classification_metrics": {
+    "num_samples": 30,
+    "num_classes": 10,
+    "unclassified_count": 0,
+    "accuracy": 0.7333,
+    "macro_precision": 0.735,
+    "macro_recall": 0.7333,
+    "macro_f1": 0.6945,
+    "per_class_metrics": {
+      "ACADEMIC_RECORDS": {
+        "precision": 0.6,
+        "recall": 1,
+        "f1": 0.75,
+        "support": 3
+      },
+      "TUITION_FEES": {
+        "precision": 0.75,
+        "recall": 1,
+        "f1": 0.8571,
+        "support": 3
+      },
+      "SCHOLARSHIPS": {
+        "precision": 0,
+        "recall": 0,
+        "f1": 0,
+        "support": 3
+      },
+      "EXAM_CELL": {
+        "precision": 0.5,
+        "recall": 0.6667,
+        "f1": 0.5714,
+        "support": 3
+      },
+      "HOSTEL_HOUSING": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "support": 3
+      },
+      "CAMPUS_IT": {
+        "precision": 0.5,
+        "recall": 1,
+        "f1": 0.6667,
+        "support": 3
+      },
+      "LIBRARY_SERVICES": {
+        "precision": 1,
+        "recall": 0.3333,
+        "f1": 0.5,
+        "support": 3
+      },
+      "TRANSPORTATION": {
+        "precision": 1,
+        "recall": 0.6667,
+        "f1": 0.8,
+        "support": 3
+      },
+      "CAREER_PLACEMENT": {
+        "precision": 1,
+        "recall": 0.6667,
+        "f1": 0.8,
+        "support": 3
+      },
+      "STUDENT_AFFAIRS": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "support": 3
+      }
+    },
+    "confusion_matrix": [
+      [
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        2,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        2,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        2,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        3
+      ]
+    ],
+    "category_labels": [
+      "ACADEMIC_RECORDS",
+      "TUITION_FEES",
+      "SCHOLARSHIPS",
+      "EXAM_CELL",
+      "HOSTEL_HOUSING",
+      "CAMPUS_IT",
+      "LIBRARY_SERVICES",
+      "TRANSPORTATION",
+      "CAREER_PLACEMENT",
+      "STUDENT_AFFAIRS"
+    ]
+  },
+  "retrieval_metrics": {
+    "num_queries": 25,
+    "recall_at_1": 0.68,
+    "recall_at_3": 0.8,
+    "recall_at_5": 0.88,
+    "mrr_at_5": 0.758,
+    "detailed_results": [
+      {
+        "query": "When do I need to pay my tuition fee and what is the penalty for delay?",
+        "targetId": "faq-01",
+        "retrievedRank": 1,
+        "isHitAt5": true,
+        "reciprocalRank": 1,
+        "topResult": {
+          "id": "faq-01",
+          "question": "What are the semester tuition fee payment deadlines and late penalty fees?",
+          "similarity": 0.5712
+        }
+      },
+      {
+        "query": "Bank debited semester fee amount but college site still says pending payment",
+        "targetId": "faq-02",
+        "retrievedRank": 5,
+        "isHitAt5": true,
+        "reciprocalRank": 0.2,
+        "topResult": {
+          "id": "faq-01",
+          "question": "What are the semester tuition fee payment deadlines and late penalty fees?",
+          "similarity": 0.3589
+        }
+      },
+      {
+        "query": "I need an official transcript stamped and sealed for university in USA",
+        "targetId": "faq-03",
+        "retrievedRank": 1,
+        "isHitAt5": true,
+        "reciprocalRank": 1,
+        "topResult": {
+          "id": "faq-03",
+          "question": "How do I apply for an official sealed academic transcript for higher studies?",
+          "similarity": 0.4442
+        }
+      },
+      {
+        "query": "Father's name is spelled wrong on my third semester marks card",
+        "targetId": "faq-04",
+        "retrievedRank": 1,
+        "isHitAt5": true,
+        "reciprocalRank": 1,
+        "topResult": {
+          "id": "faq-04",
+          "question": "What is the procedure to correct student or parent name spelling on marksheet?",
+          "similarity": 0.291
+        }
+      },
+      {
+        "query": "My elective paper and regular exam are scheduled at same hour",
+        "targetId": "faq-05",
+        "retrievedRank": ">10",
+        "isHitAt5": false,
+        "reciprocalRank": 0,
+        "topResult": {
+          "id": "faq-06",
+          "question": "What is the fee and timeline for end-semester paper revaluation?",
+          "similarity": 0.2176
+        }
+      },
+      {
+        "query": "How much does it cost to get my mathematics exam paper rechecked?",
+        "targetId": "faq-06",
+        "retrievedRank": ">10",
+        "isHitAt5": false,
+        "reciprocalRank": 0,
+        "topResult": null
+      },
+      {
+        "query": "What time does girls hostel gate close at night and how to get leave pass?",
+        "targetId": "faq-07",
+        "retrievedRank": 1,
+        "isHitAt5": true,
+        "reciprocalRank": 1,
+        "topResult": {
+          "id": "faq-07",
+          "question": "What is the hostel night curfew timing and night-out pass procedure?",
+          "similarity": 0.4969
+        }
+      },
+      {
+        "query": "Water tap leaking and fan regulator broken in hostel room 204",
+        "targetId": "faq-08",
+        "retrievedRank": 2,
+        "isHitAt5": true,
+        "reciprocalRank": 0.5,
+        "topResult": {
+          "id": "faq-07",
+          "question": "What is the hostel night curfew timing and night-out pass procedure?",
+          "similarity": 0.2438
+        }
+      },
+      {
+        "query": "How do I register MAC address of my MacBook for hostel wifi?",
+        "targetId": "faq-09",
+        "retrievedRank": 1,
+        "isHitAt5": true,
+        "reciprocalRank": 1,
+        "topResult": {
+          "id": "faq-09",
+          "question": "How do I register a new laptop MAC address for campus WiFi?",
+          "similarity": 0.6655
+        }
+      },
+      {
+        "query": "I cannot remember my student portal password and cannot login",
+        "targetId": "faq-10",
+        "retrievedRank": 1,
+        "isHitAt5": true,
+        "reciprocalRank": 1,
+        "topResult": {
+          "id": "faq-10",
+          "question": "How do I reset my institutional college email and student ERP password?",
+          "similarity": 0.2843
+        }
+      },
+      {
+        "query": "How do I access IEEE papers from home without college wifi?",
+        "targetId": "faq-11",
+        "retrievedRank": 1,
+        "isHitAt5": true,
+        "reciprocalRank": 1,
+        "topResult": {
+          "id": "faq-11",
+          "question": "How do I access IEEE, ScienceDirect and ACM digital libraries from off-campus?",
+          "similarity": 0.4517
+        }
+      },
+      {
+        "query": "How many books can undergraduate students borrow from library?",
+        "targetId": "faq-12",
+        "retrievedRank": 1,
+        "isHitAt5": true,
+        "reciprocalRank": 1,
+        "topResult": {
+          "id": "faq-12",
+          "question": "What are the library overdue fine rates and maximum book borrowing limits?",
+          "similarity": 0.366
+        }
+      },
+      {
+        "query": "Where do I apply for student bus pass for route 12?",
+        "targetId": "faq-13",
+        "retrievedRank": 1,
+        "isHitAt5": true,
+        "reciprocalRank": 1,
+        "topResult": {
+          "id": "faq-13",
+          "question": "How do day-scholar students apply for or renew college bus passes?",
+          "similarity": 0.4638
+        }
+      },
+      {
+        "query": "Security clamped my bike because I do not have a parking sticker",
+        "targetId": "faq-14",
+        "retrievedRank": 1,
+        "isHitAt5": true,
+        "reciprocalRank": 1,
+        "topResult": {
+          "id": "faq-14",
+          "question": "Where can students obtain campus two-wheeler and four-wheeler vehicle parking stickers?",
+          "similarity": 0.3679
+        }
+      },
+      {
+        "query": "Need NOC certificate from college for summer internship at Infosys",
+        "targetId": "faq-15",
+        "retrievedRank": 2,
+        "isHitAt5": true,
+        "reciprocalRank": 0.5,
+        "topResult": {
+          "id": "faq-19",
+          "question": "What documents are required for National Scholarship Portal (NSP) verification?",
+          "similarity": 0.4058
+        }
+      },
+      {
+        "query": "Can students with backlog register for dream placement drives?",
+        "targetId": "faq-16",
+        "retrievedRank": 1,
+        "isHitAt5": true,
+        "reciprocalRank": 1,
+        "topResult": {
+          "id": "faq-16",
+          "question": "What are the minimum eligibility rules for campus placement recruitment drives?",
+          "similarity": 0.4067
+        }
+      },
+      {
+        "query": "My student RFID identity card was stolen in bus; how to get new one?",
+        "targetId": "faq-17",
+        "retrievedRank": 1,
+        "isHitAt5": true,
+        "reciprocalRank": 1,
+        "topResult": {
+          "id": "faq-17",
+          "question": "What should I do if I lose my physical student ID card?",
+          "similarity": 0.3353
+        }
+      },
+      {
+        "query": "Where can I report seniors harassing juniors in hostel block?",
+        "targetId": "faq-18",
+        "retrievedRank": 2,
+        "isHitAt5": true,
+        "reciprocalRank": 0.5,
+        "topResult": {
+          "id": "faq-05",
+          "question": "How do I report an examination timetable clash between two registered courses?",
+          "similarity": 0.213
+        }
+      },
+      {
+        "query": "What papers do I need to show nodal officer for NSP scholarship portal?",
+        "targetId": "faq-19",
+        "retrievedRank": 1,
+        "isHitAt5": true,
+        "reciprocalRank": 1,
+        "topResult": {
+          "id": "faq-19",
+          "question": "What documents are required for National Scholarship Portal (NSP) verification?",
+          "similarity": 0.4026
+        }
+      },
+      {
+        "query": "Will I lose my tuition fee concession if my semester GPA drops to 7.0?",
+        "targetId": "faq-20",
+        "retrievedRank": 4,
+        "isHitAt5": true,
+        "reciprocalRank": 0.25,
+        "topResult": {
+          "id": "faq-01",
+          "question": "What are the semester tuition fee payment deadlines and late penalty fees?",
+          "similarity": 0.4403
+        }
+      },
+      {
+        "query": "Procedure for duplicate fee receipt after successful netbanking transaction",
+        "targetId": "faq-02",
+        "retrievedRank": 1,
+        "isHitAt5": true,
+        "reciprocalRank": 1,
+        "topResult": {
+          "id": "faq-02",
+          "question": "What should I do if money was deducted from my bank but the fee portal shows unpaid?",
+          "similarity": 0.3444
+        }
+      },
+      {
+        "query": "Applying for WES evaluation packet from academic registrar counter",
+        "targetId": "faq-03",
+        "retrievedRank": 1,
+        "isHitAt5": true,
+        "reciprocalRank": 1,
+        "topResult": {
+          "id": "faq-03",
+          "question": "How do I apply for an official sealed academic transcript for higher studies?",
+          "similarity": 0.3684
+        }
+      },
+      {
+        "query": "Can I renew library book online without coming to counter?",
+        "targetId": "faq-12",
+        "retrievedRank": 1,
+        "isHitAt5": true,
+        "reciprocalRank": 1,
+        "topResult": {
+          "id": "faq-12",
+          "question": "What are the library overdue fine rates and maximum book borrowing limits?",
+          "similarity": 0.288
+        }
+      },
+      {
+        "query": "Emergency gate entry after 10 PM for flight arrival",
+        "targetId": "faq-07",
+        "retrievedRank": 1,
+        "isHitAt5": true,
+        "reciprocalRank": 1,
+        "topResult": {
+          "id": "faq-07",
+          "question": "What is the hostel night curfew timing and night-out pass procedure?",
+          "similarity": 0.2109
+        }
+      },
+      {
+        "query": "Wi-Fi not working on Android mobile in library",
+        "targetId": "faq-09",
+        "retrievedRank": ">10",
+        "isHitAt5": false,
+        "reciprocalRank": 0,
+        "topResult": null
+      }
+    ]
+  }
+}

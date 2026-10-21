@@ -35,6 +35,21 @@ router.post('/chat', requireAuth, aiRateLimiter, AiController.chat);
 router.post('/suggest-ticket', requireAuth, aiRateLimiter, AiController.suggestTicket);
 router.post('/feedback', requireAuth, AiController.recordFeedback);
 
+// Phase 7: ML Query Classification & Advisory Routing Suggestions
+router.post('/classify-query', requireAuth, AiController.classifyQuery);
+
+// Phase 7: Semantic Search for FAQs & Ticket Deflection
+router.post('/similar-faqs', requireAuth, AiController.getSimilarFaqs);
+router.post('/deflection-event', requireAuth, AiController.recordDeflection);
+
+// Phase 7: AI Usage, Retrieval Quality & ML Evaluation Analytics
+router.get(
+  '/analytics',
+  requireAuth,
+  requireRole('STAFF', 'SUPER_ADMIN'),
+  AiController.getAiAnalytics
+);
+
 // Staff-facing Ticket Summarization (Department permission checked inside controller)
 router.post(
   '/summarize-ticket',

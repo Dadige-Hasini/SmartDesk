@@ -28,10 +28,13 @@ import {
   AlertCircle,
   Eye,
   Trash2,
+  Bot,
+  Sparkles,
 } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { formatToIST, formatDateOnlyIST } from '../utils/date';
+import AiAnalyticsView from '../components/AiAnalyticsView';
 
 const STAFF_STATUS_BADGES = {
   PENDING_APPROVAL: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-500/30',
@@ -448,7 +451,23 @@ export default function AdminDashboardPage() {
           <History className="w-4 h-4" />
           <span>Audit Events</span>
         </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('ai-analytics')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors whitespace-nowrap ${
+            activeTab === 'ai-analytics'
+              ? 'bg-coral-500 text-white shadow'
+              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-navy-800'
+          }`}
+        >
+          <Bot className="w-4 h-4" />
+          <span>AI & ML Analytics</span>
+        </button>
       </div>
+
+      {/* TAB: AI & ML ANALYTICS (Phase 7) */}
+      {activeTab === 'ai-analytics' && <AiAnalyticsView />}
 
       {/* TAB 1: DEPARTMENT PERFORMANCE TABLE */}
       {activeTab === 'overview' && (

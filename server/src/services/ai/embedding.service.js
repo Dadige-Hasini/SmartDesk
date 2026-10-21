@@ -46,6 +46,13 @@ export class EmbeddingService {
   }
 
   /**
+   * Alias for embedText
+   */
+  async generateEmbedding(text) {
+    return this.embedText(text);
+  }
+
+  /**
    * Batch embedding generation
    */
   async embedBatch(texts) {

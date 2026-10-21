@@ -9,7 +9,8 @@
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "evaluate:ml": "node src/ml/scripts/evaluate.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",

@@ -56,6 +56,12 @@ export default function CreateTicketPage() {
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
 
+  // Phase 7: Real-time FAQ deflection & AI Category Suggestion
+  const [similarFaqs, setSimilarFaqs] = useState([]);
+  const [expandedFaqId, setExpandedFaqId] = useState(null);
+  const [aiCategorySuggestion, setAiCategorySuggestion] = useState(null);
+  const [isDeflecting, setIsDeflecting] = useState(false);
+
   useEffect(() => {
     async function loadCategories() {
       try {
@@ -77,6 +83,69 @@ export default function CreateTicketPage() {
     }
     loadCategories();
   }, [prefillData]);
+
+  // Phase 7: Debounced FAQ search and Category classification as student types
+  useEffect(() => {
+    if (!title || title.trim().length < 6) {
+      setSimilarFaqs([]);
+      setAiCategorySuggestion(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        // 1. Semantic FAQ Search for Deflection
+        const faqRes = await api.post('/ai/similar-faqs', {
+          query: title.trim(),
+          limit: 3,
+        });
+        const faqs = faqRes?.data?.data?.faqs || [];
+        setSimilarFaqs(faqs);
+
+        // 2. ML Category Classification (Advisory)
+        const classRes = await api.post('/ai/classify-query', {
+          query: title.trim(),
+        });
+        const pred = classRes?.data?.data;
+        if (pred && !pred.isLowConfidence && pred.suggestedCategoryCode) {
+          const matchedCat = categories.find((c) => c.code === pred.suggestedCategoryCode);
+          if (matchedCat) {
+            setAiCategorySuggestion({
+              category: matchedCat,
+              confidenceScore: pred.confidenceScore,
+              isAmbiguous: pred.isAmbiguous,
+            });
+          }
+        }
+      } catch {
+        // Silent fallback: manual ticket flow remains unaffected
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [title, categories]);
+
+  // Handle Ticket Deflection (student chooses FAQ solution)
+  const handleDeflectWithFaq = async (faq) => {
+    setIsDeflecting(true);
+    try {
+      await api.post('/ai/deflection-event', {
+        query: title,
+        categoryId: faq.category_id || categoryId,
+        deflectedBy: 'SIMILAR_FAQ',
+        matchedFaqId: faq.id,
+        similarityScore: faq.similarity,
+        wasTicketCreated: false,
+      });
+
+      toast.success('Inquiry resolved instantly! No ticket was submitted.');
+      navigate('/dashboard');
+    } catch {
+      navigate('/dashboard');
+    } finally {
+      setIsDeflecting(false);
+    }
+  };
 
   const selectedCategory = categories.find((c) => c.id === categoryId);
 
@@ -252,9 +321,29 @@ export default function CreateTicketPage() {
         <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
           {/* Category Selector with Automatic Department Routing Notice */}
           <div className="space-y-2">
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
-              Query Category <span className="text-coral-500">*</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                Query Category <span className="text-coral-500">*</span>
+              </label>
+
+              {/* Advisory ML Category Suggestion */}
+              {aiCategorySuggestion && aiCategorySuggestion.category.id !== categoryId && (
+                <div className="flex items-center gap-2 animate-fadeIn text-[11px]">
+                  <span className="font-semibold text-coral-600 dark:text-coral-400 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    AI Suggests: {aiCategorySuggestion.category.name} ({Math.round(aiCategorySuggestion.confidenceScore * 100)}%)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCategoryId(aiCategorySuggestion.category.id)}
+                    className="px-2 py-0.5 rounded bg-coral-500 hover:bg-coral-600 text-white font-bold text-[10px] shadow-xs cursor-pointer transition-colors"
+                  >
+                    Apply
+                  </button>
+                </div>
+              )}
+            </div>
+
             <select
               value={categoryId}
               onChange={(e) => {
@@ -310,6 +399,60 @@ export default function CreateTicketPage() {
             />
             {errors.title && (
               <p className="text-xs text-rose-500 font-medium">{errors.title}</p>
+            )}
+
+            {/* Phase 7: Real-time Recommended FAQs for Ticket Deflection */}
+            {similarFaqs.length > 0 && (
+              <div className="mt-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-3 animate-fadeIn">
+                <div className="flex items-center justify-between text-xs font-bold text-amber-800 dark:text-amber-300">
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    Recommended Instant Answers (FAQs)
+                  </span>
+                  <span className="text-[10px] text-gray-500 dark:text-gray-400 font-normal">
+                    Could save you waiting for staff response
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {similarFaqs.map((faq) => {
+                    const isExpanded = expandedFaqId === faq.id;
+                    return (
+                      <div
+                        key={faq.id}
+                        className="p-3 rounded-xl bg-white dark:bg-navy-900 border border-amber-200 dark:border-navy-800 text-xs space-y-2 shadow-xs"
+                      >
+                        <div
+                          onClick={() => setExpandedFaqId(isExpanded ? null : faq.id)}
+                          className="flex items-center justify-between cursor-pointer font-semibold text-gray-900 dark:text-white hover:text-coral-600 transition-colors"
+                        >
+                          <span className="flex-1 pr-2">{faq.question}</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
+                            {Math.round(faq.similarity * 100)}% match
+                          </span>
+                        </div>
+
+                        {isExpanded && (
+                          <div className="pt-2 border-t border-gray-100 dark:border-navy-800 space-y-2 text-gray-600 dark:text-gray-300 animate-fadeIn">
+                            <p className="text-xs leading-relaxed">{faq.answer}</p>
+                            <div className="flex items-center justify-end">
+                              <button
+                                type="button"
+                                onClick={() => handleDeflectWithFaq(faq)}
+                                disabled={isDeflecting}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>This solves my issue (No ticket needed)</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </div>
 

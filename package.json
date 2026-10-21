@@ -13,7 +13,8 @@
     "test:server": "npm --prefix server test",
     "test:client": "npm --prefix client test",
     "install:all": "npm install && npm --prefix server install && npm --prefix client install",
-    "seed": "node scripts/seed-runner.js"
+    "seed": "node scripts/seed-runner.js",
+    "evaluate:ml": "npm --prefix server run evaluate:ml"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

@@ -1,0 +1,173 @@
+{
+  "benchmark_version": "v1.0.0",
+  "description": "SmartDesk FAQ Semantic Search & Retrieval Evaluation Benchmark",
+  "faqs": [
+    {
+      "id": "faq-01",
+      "category_code": "TUITION_FEES",
+      "question": "What are the semester tuition fee payment deadlines and late penalty fees?",
+      "answer": "Semester fees must be remitted by September 15 for odd semesters and February 15 for even semesters. A late fine of INR 500 applies for the first 7 days, increasing to INR 1,500 until the final cutoff date.",
+      "keywords": ["fee", "tuition", "deadline", "late fee", "penalty", "due date"]
+    },
+    {
+      "id": "faq-02",
+      "category_code": "TUITION_FEES",
+      "question": "What should I do if money was deducted from my bank but the fee portal shows unpaid?",
+      "answer": "Bank gateway transactions typically reconcile within 24 to 48 banking hours. If the status does not update, submit a ticket with your transaction reference ID and bank debit statement.",
+      "keywords": ["payment deducted", "transaction failed", "duplicate charge", "unpaid status", "reconcile"]
+    },
+    {
+      "id": "faq-03",
+      "category_code": "ACADEMIC_RECORDS",
+      "question": "How do I apply for an official sealed academic transcript for higher studies?",
+      "answer": "Transcripts can be requested through the Student Portal under Academic Services. Normal processing takes 5 working days, while expedited processing takes 48 hours for visa verification.",
+      "keywords": ["transcript", "official seal", "wes", "higher studies", "academic records"]
+    },
+    {
+      "id": "faq-04",
+      "category_code": "ACADEMIC_RECORDS",
+      "question": "What is the procedure to correct student or parent name spelling on marksheet?",
+      "answer": "Submit a ticket to the Academic Registrar with a copy of your Class 10/12 government matriculation certificate and Aadhaar card for name correction.",
+      "keywords": ["name correction", "spelling mistake", "marksheet", "grade card", "aadhaar"]
+    },
+    {
+      "id": "faq-05",
+      "category_code": "EXAM_CELL",
+      "question": "How do I report an examination timetable clash between two registered courses?",
+      "answer": "Report timetable conflicts to the Controller of Examinations at least 7 days before commencement using the exam conflict form with course codes.",
+      "keywords": ["exam clash", "timetable overlap", "same time", "examination cell", "date clash"]
+    },
+    {
+      "id": "faq-06",
+      "category_code": "EXAM_CELL",
+      "question": "What is the fee and timeline for end-semester paper revaluation?",
+      "answer": "Revaluation requests must be filed within 10 days of results announcement. Fee is INR 750 per paper. Answer scripts are independently evaluated by senior faculty.",
+      "keywords": ["revaluation", "rechecking", "paper reval", "marks update", "photocopy"]
+    },
+    {
+      "id": "faq-07",
+      "category_code": "HOSTEL_HOUSING",
+      "question": "What is the hostel night curfew timing and night-out pass procedure?",
+      "answer": "Hostel gates close at 10:00 PM on weekdays and 10:30 PM on weekends. Night-out leave passes require parental approval via registered SMS/app 6 hours in advance.",
+      "keywords": ["curfew", "night out", "gate pass", "hostel timing", "parental consent"]
+    },
+    {
+      "id": "faq-08",
+      "category_code": "HOSTEL_HOUSING",
+      "question": "How do I lodge a hostel room electrical, plumbing or carpentry repair complaint?",
+      "answer": "Room maintenance requests must be logged on the SmartDesk maintenance portal or register book in the warden's office. Standard repair SLA is 24 hours.",
+      "keywords": ["room repair", "plumbing", "carpenter", "ceiling fan", "water leakage"]
+    },
+    {
+      "id": "faq-09",
+      "category_code": "CAMPUS_IT",
+      "question": "How do I register a new laptop MAC address for campus WiFi?",
+      "answer": "Connect to 'Campus-Onboarding' network and visit http://wifi.college.edu to enter your student credentials and device MAC address. Max 3 devices permitted.",
+      "keywords": ["wifi", "mac address", "cyberoam", "wireless", "device registration"]
+    },
+    {
+      "id": "faq-10",
+      "category_code": "CAMPUS_IT",
+      "question": "How do I reset my institutional college email and student ERP password?",
+      "answer": "Use the self-service password reset page with your registered mobile OTP, or visit the Central IT Helpdesk on Ground Floor, Admin Block with your student ID.",
+      "keywords": ["password reset", "forgot password", "college email", "erp login", "otp"]
+    },
+    {
+      "id": "faq-11",
+      "category_code": "LIBRARY_SERVICES",
+      "question": "How do I access IEEE, ScienceDirect and ACM digital libraries from off-campus?",
+      "answer": "Access digital databases through the remote library proxy portal at https://elibrary.college.edu using your college LDAP credentials or university VPN.",
+      "keywords": ["ieee", "sciencedirect", "digital library", "off campus", "vpn", "proxy"]
+    },
+    {
+      "id": "faq-12",
+      "category_code": "LIBRARY_SERVICES",
+      "question": "What are the library overdue fine rates and maximum book borrowing limits?",
+      "answer": "Undergraduates can borrow up to 4 books for 14 days. Overdue fines are INR 5 per day per book for the first week and INR 10 per day thereafter.",
+      "keywords": ["library fine", "borrow limit", "overdue", "renewal", "book return"]
+    },
+    {
+      "id": "faq-13",
+      "category_code": "TRANSPORTATION",
+      "question": "How do day-scholar students apply for or renew college bus passes?",
+      "answer": "Bus pass applications open 15 days before each semester on the Transport Portal. Submit route choice, passport photo, and receipt of transport fee payment.",
+      "keywords": ["bus pass", "college bus", "transport renewal", "day scholar", "bus route"]
+    },
+    {
+      "id": "faq-14",
+      "category_code": "TRANSPORTATION",
+      "question": "Where can students obtain campus two-wheeler and four-wheeler vehicle parking stickers?",
+      "answer": "Parking stickers are issued by Campus Security Office at Gate 1 upon presenting valid driving license, vehicle RC copy, and college ID card.",
+      "keywords": ["parking sticker", "vehicle permit", "parking pass", "two wheeler", "gate security"]
+    },
+    {
+      "id": "faq-15",
+      "category_code": "CAREER_PLACEMENT",
+      "question": "What is the procedure to get an Internship No Objection Certificate (NOC)?",
+      "answer": "Submit company offer letter, duration details, and job role to the Department Placement Faculty Coordinator. Approved NOC is issued within 3 working days.",
+      "keywords": ["internship noc", "no objection certificate", "company offer", "internship approval"]
+    },
+    {
+      "id": "faq-16",
+      "category_code": "CAREER_PLACEMENT",
+      "question": "What are the minimum eligibility rules for campus placement recruitment drives?",
+      "answer": "Students must have minimum 60% or 6.5 CGPA with zero active backlogs at the time of drive. Individual companies may set higher cutoffs.",
+      "keywords": ["placement eligibility", "cgpa cutoff", "backlog criteria", "recruitment drive", "campus placement"]
+    },
+    {
+      "id": "faq-17",
+      "category_code": "STUDENT_AFFAIRS",
+      "question": "What should I do if I lose my physical student ID card?",
+      "answer": "File a lost item declaration at security desk, pay INR 250 duplicate card fee at Accounts, and submit receipt to Student Affairs for a replacement smartcard.",
+      "keywords": ["lost id", "id card replacement", "duplicate student id", "rfid card", "student card"]
+    },
+    {
+      "id": "faq-18",
+      "category_code": "STUDENT_AFFAIRS",
+      "question": "How can students report ragging, harassment, or severe personal grievances?",
+      "answer": "Contact the 24/7 Anti-Ragging Helpline at 1800-180-5522 or email antiragging@college.edu. Complaints can also be submitted confidentially on SmartDesk.",
+      "keywords": ["anti ragging", "harassment", "complaint", "student grievance", "counselor"]
+    },
+    {
+      "id": "faq-19",
+      "category_code": "SCHOLARSHIPS",
+      "question": "What documents are required for National Scholarship Portal (NSP) verification?",
+      "answer": "Upload income certificate, domicile certificate, previous year marksheet, fee receipt, bank passbook copy, and bonafide certificate for nodal officer verification.",
+      "keywords": ["nsp verification", "scholarship documents", "nodal officer", "income certificate"]
+    },
+    {
+      "id": "faq-20",
+      "category_code": "SCHOLARSHIPS",
+      "question": "What is the minimum CGPA required to retain merit-cum-means tuition fee scholarship?",
+      "answer": "Recipients must maintain a minimum CGPA of 7.50 without any backlog papers and minimum 75% attendance in each semester for automatic scholarship renewal.",
+      "keywords": ["scholarship renewal", "cgpa requirement", "merit scholarship", "minimum gpa"]
+    }
+  ],
+  "test_queries": [
+    {"query": "When do I need to pay my tuition fee and what is the penalty for delay?", "relevant_faq_id": "faq-01"},
+    {"query": "Bank debited semester fee amount but college site still says pending payment", "relevant_faq_id": "faq-02"},
+    {"query": "I need an official transcript stamped and sealed for university in USA", "relevant_faq_id": "faq-03"},
+    {"query": "Father's name is spelled wrong on my third semester marks card", "relevant_faq_id": "faq-04"},
+    {"query": "My elective paper and regular exam are scheduled at same hour", "relevant_faq_id": "faq-05"},
+    {"query": "How much does it cost to get my mathematics exam paper rechecked?", "relevant_faq_id": "faq-06"},
+    {"query": "What time does girls hostel gate close at night and how to get leave pass?", "relevant_faq_id": "faq-07"},
+    {"query": "Water tap leaking and fan regulator broken in hostel room 204", "relevant_faq_id": "faq-08"},
+    {"query": "How do I register MAC address of my MacBook for hostel wifi?", "relevant_faq_id": "faq-09"},
+    {"query": "I cannot remember my student portal password and cannot login", "relevant_faq_id": "faq-10"},
+    {"query": "How do I access IEEE papers from home without college wifi?", "relevant_faq_id": "faq-11"},
+    {"query": "How many books can undergraduate students borrow from library?", "relevant_faq_id": "faq-12"},
+    {"query": "Where do I apply for student bus pass for route 12?", "relevant_faq_id": "faq-13"},
+    {"query": "Security clamped my bike because I do not have a parking sticker", "relevant_faq_id": "faq-14"},
+    {"query": "Need NOC certificate from college for summer internship at Infosys", "relevant_faq_id": "faq-15"},
+    {"query": "Can students with backlog register for dream placement drives?", "relevant_faq_id": "faq-16"},
+    {"query": "My student RFID identity card was stolen in bus; how to get new one?", "relevant_faq_id": "faq-17"},
+    {"query": "Where can I report seniors harassing juniors in hostel block?", "relevant_faq_id": "faq-18"},
+    {"query": "What papers do I need to show nodal officer for NSP scholarship portal?", "relevant_faq_id": "faq-19"},
+    {"query": "Will I lose my tuition fee concession if my semester GPA drops to 7.0?", "relevant_faq_id": "faq-20"},
+    {"query": "Procedure for duplicate fee receipt after successful netbanking transaction", "relevant_faq_id": "faq-02"},
+    {"query": "Applying for WES evaluation packet from academic registrar counter", "relevant_faq_id": "faq-03"},
+    {"query": "Can I renew library book online without coming to counter?", "relevant_faq_id": "faq-12"},
+    {"query": "Emergency gate entry after 10 PM for flight arrival", "relevant_faq_id": "faq-07"},
+    {"query": "Wi-Fi not working on Android mobile in library", "relevant_faq_id": "faq-09"}
+  ]
+}
