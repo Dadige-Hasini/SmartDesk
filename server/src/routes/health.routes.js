@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { sendSuccess } from '../utils/response.js';
 import { supabaseClient } from '../config/supabase.js';
+import { llmService } from '../services/ai/llm.service.js';
 
 const router = Router();
 
@@ -26,13 +27,11 @@ router.get('/ready', async (req, res) => {
 
   if (supabaseClient) {
     try {
-      // Light query to verify database liveness
       const { error } = await supabaseClient
         .from('departments')
         .select('id')
         .limit(1);
 
-      // If table doesn't exist yet (Phase 0), check if client initialized
       if (!error || error.code === '42P01') {
         dbStatus = 'connected';
       } else {
@@ -43,15 +42,18 @@ router.get('/ready', async (req, res) => {
     }
   }
 
-  const isReady = true;
+  const aiStatus = llmService?.getStatus() || { provider: 'mock' };
 
   return sendSuccess(res, 'SmartDesk API readiness check completed', {
-    status: isReady ? 'ready' : 'not_ready',
+    status: 'ready',
     services: {
       api: 'operational',
       database: dbStatus,
-      storage: supabaseClient ? 'configured' : 'unconfigured',
+      storage: supabaseClient ? 'configured' : 'in-memory-fallback',
+      aiAssistant: aiStatus.provider,
+      slaScheduler: 'operational',
     },
+    uptimeSeconds: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
   });
 });

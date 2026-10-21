@@ -10,12 +10,44 @@ const LOG_LEVELS = {
   ERROR: 'ERROR',
 };
 
+const SENSITIVE_KEYS = new Set([
+  'password',
+  'token',
+  'access_token',
+  'refresh_token',
+  'authorization',
+  'secret',
+  'apikey',
+  'ai_api_key',
+  'smtp_pass',
+  'cookie',
+  'service_role_key',
+]);
+
+export function sanitizeMeta(obj, depth = 0) {
+  if (!obj || typeof obj !== 'object' || depth > 5) return obj;
+  if (Array.isArray(obj)) return obj.map((item) => sanitizeMeta(item, depth + 1));
+
+  const clean = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (SENSITIVE_KEYS.has(k.toLowerCase())) {
+      clean[k] = '[REDACTED]';
+    } else if (typeof v === 'object' && v !== null) {
+      clean[k] = sanitizeMeta(v, depth + 1);
+    } else {
+      clean[k] = v;
+    }
+  }
+  return clean;
+}
+
 function formatLog(level, message, meta = {}) {
+  const sanitizedMeta = sanitizeMeta(meta);
   const logEntry = {
     timestamp: new Date().toISOString(),
     level,
     message,
-    ...meta,
+    ...sanitizedMeta,
   };
 
   if (process.env.NODE_ENV === 'production') {
@@ -23,9 +55,9 @@ function formatLog(level, message, meta = {}) {
   }
 
   // Readable developer format in non-production
-  const reqIdStr = meta.requestId ? `[${meta.requestId}] ` : '';
-  const metaStr = Object.keys(meta).length > (meta.requestId ? 1 : 0)
-    ? ` ${JSON.stringify(meta)}`
+  const reqIdStr = sanitizedMeta.requestId ? `[${sanitizedMeta.requestId}] ` : '';
+  const metaStr = Object.keys(sanitizedMeta).length > (sanitizedMeta.requestId ? 1 : 0)
+    ? ` ${JSON.stringify(sanitizedMeta)}`
     : '';
   return `[${logEntry.timestamp}] [${level}] ${reqIdStr}${message}${metaStr}`;
 }
