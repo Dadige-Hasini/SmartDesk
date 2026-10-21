@@ -12,6 +12,7 @@ import {
 } from '../validators/ticket.validator.js';
 import { sendSuccess } from '../utils/response.js';
 import { supabaseAdmin, supabaseClient } from '../config/supabase.js';
+import { CATEGORIES } from '../ml/taxonomy.js';
 
 export class TicketController {
   /**
@@ -186,20 +187,17 @@ export class TicketController {
    */
   async getCategories(req, res, next) {
     try {
+      const canonicalCategories = CATEGORIES.map((c) => ({
+        id: c.id,
+        name: c.name,
+        code: c.code,
+        description: c.description,
+        default_department_code: c.defaultDepartmentCode,
+      }));
+
       const db = supabaseAdmin || supabaseClient;
       if (!db) {
-        return sendSuccess(res, 'Categories retrieved (demo list)', [
-          { id: '11111111-1111-1111-1111-111111111111', name: 'Fee & Payments', code: 'FEE' },
-          { id: '22222222-2222-2222-2222-222222222222', name: 'ID Card Services', code: 'IDCARD' },
-          { id: '33333333-3333-3333-3333-333333333333', name: 'Timetable & Schedules', code: 'TIMETABLE' },
-          { id: '44444444-4444-4444-4444-444444444444', name: 'Library Resources', code: 'LIBRARY' },
-          { id: '55555555-5555-5555-5555-555555555555', name: 'Hostel & Mess', code: 'HOSTEL' },
-          { id: '66666666-6666-6666-6666-666666666666', name: 'Student Grievances', code: 'GRIEVANCE' },
-          { id: '77777777-7777-7777-7777-777777777777', name: 'Academic Queries', code: 'ACADEMIC' },
-          { id: '88888888-8888-8888-8888-888888888888', name: 'Transport & Bus', code: 'TRANSPORT' },
-          { id: '99999999-9999-9999-9999-999999999999', name: 'Examinations & Grades', code: 'EXAM' },
-          { id: '00000000-0000-0000-0000-000000000000', name: 'General / Other', code: 'OTHER' },
-        ]);
+        return sendSuccess(res, 'Categories retrieved (canonical fallback)', canonicalCategories);
       }
 
       const { data, error } = await db
@@ -211,19 +209,8 @@ export class TicketController {
         .eq('is_active', true)
         .order('name');
 
-      if (error) {
-        return sendSuccess(res, 'Categories retrieved (fallback list)', [
-          { id: '11111111-1111-1111-1111-111111111111', name: 'Fee & Payments', code: 'FEE' },
-          { id: '22222222-2222-2222-2222-222222222222', name: 'ID Card Services', code: 'IDCARD' },
-          { id: '33333333-3333-3333-3333-333333333333', name: 'Timetable & Schedules', code: 'TIMETABLE' },
-          { id: '44444444-4444-4444-4444-444444444444', name: 'Library Resources', code: 'LIBRARY' },
-          { id: '55555555-5555-5555-5555-555555555555', name: 'Hostel & Mess', code: 'HOSTEL' },
-          { id: '66666666-6666-6666-6666-666666666666', name: 'Student Grievances', code: 'GRIEVANCE' },
-          { id: '77777777-7777-7777-7777-777777777777', name: 'Academic Queries', code: 'ACADEMIC' },
-          { id: '88888888-8888-8888-8888-888888888888', name: 'Transport & Bus', code: 'TRANSPORT' },
-          { id: '99999999-9999-9999-9999-999999999999', name: 'Examinations & Grades', code: 'EXAM' },
-          { id: '00000000-0000-0000-0000-000000000000', name: 'General / Other', code: 'OTHER' },
-        ]);
+      if (error || !data || data.length === 0) {
+        return sendSuccess(res, 'Categories retrieved (canonical list)', canonicalCategories);
       }
 
       return sendSuccess(res, 'Active categories retrieved successfully', data, 200);

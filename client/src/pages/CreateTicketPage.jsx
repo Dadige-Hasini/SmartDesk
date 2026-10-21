@@ -20,6 +20,7 @@ import {
   Bot,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { CATEGORIES as CANONICAL_CATEGORIES } from '../data/taxonomyClient';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 const MAX_FILES = 3;
@@ -66,8 +67,14 @@ export default function CreateTicketPage() {
     async function loadCategories() {
       try {
         const res = await api.get('/tickets/meta/categories');
-        const cats = res?.data?.data || [];
+        const rawList = res?.data || res;
+        const fetchedCats = Array.isArray(rawList)
+          ? rawList
+          : (Array.isArray(rawList?.data) ? rawList.data : (Array.isArray(res) ? res : []));
+        
+        const cats = fetchedCats.length > 0 ? fetchedCats : CANONICAL_CATEGORIES;
         setCategories(cats);
+
         // If not already set by AI prefill or selection, choose first
         if (cats.length > 0 && !categoryId) {
           const matched = prefillData?.categoryId
@@ -76,7 +83,10 @@ export default function CreateTicketPage() {
           setCategoryId(matched ? matched.id : cats[0].id);
         }
       } catch {
-        toast.error('Failed to load categories');
+        setCategories(CANONICAL_CATEGORIES);
+        if (CANONICAL_CATEGORIES.length > 0 && !categoryId) {
+          setCategoryId(CANONICAL_CATEGORIES[0].id);
+        }
       } finally {
         setCategoriesLoading(false);
       }
@@ -357,11 +367,15 @@ export default function CreateTicketPage() {
                   : 'border-gray-200 dark:border-navy-800 focus:border-coral-500 focus:ring-coral-400'
               } bg-white dark:bg-navy-950 text-gray-900 dark:text-white text-sm outline-none transition-all`}
             >
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name} ({cat.code})
-                </option>
-              ))}
+              {categories.length === 0 ? (
+                <option value="">Loading categories...</option>
+              ) : (
+                categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name} ({cat.code})
+                  </option>
+                ))
+              )}
             </select>
             {errors.categoryId && (
               <p className="text-xs text-rose-500 font-medium">{errors.categoryId}</p>
