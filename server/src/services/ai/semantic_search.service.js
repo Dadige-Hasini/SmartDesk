@@ -11,26 +11,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const BENCHMARK_PATH = path.join(__dirname, '..', '..', 'ml', 'data', 'faq_retrieval_benchmark.json');
 
+import { inMemoryFaqs } from '../faq.service.js';
+
 function getDbClient() {
   return supabaseAdmin || supabaseClient;
 }
 
 // In-memory fallbacks for testing and offline environments
-export const inMemoryFaqs = [];
 export const inMemoryDeflectionEvents = [];
-
-// Preload benchmark FAQs into inMemoryFaqs
-try {
-  if (fs.existsSync(BENCHMARK_PATH)) {
-    const raw = fs.readFileSync(BENCHMARK_PATH, 'utf-8');
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed.faqs)) {
-      inMemoryFaqs.push(...parsed.faqs);
-    }
-  }
-} catch (e) {
-  logger.warn('Failed to preload benchmark FAQs', { error: e.message });
-}
+export { inMemoryFaqs };
 
 export class SemanticSearchService {
   /**
@@ -73,6 +62,8 @@ export class SemanticSearchService {
     // Memory / Local Vector Fallback
     const results = [];
     for (const faq of inMemoryFaqs) {
+      // Strictly exclude retired or unapproved draft FAQs
+      if (faq.status === 'RETIRED' || faq.status === 'DRAFT' || faq.is_published === false) continue;
       if (categoryId && faq.category_id && faq.category_id !== categoryId) continue;
 
       let faqEmbedding = faq.embedding;
@@ -87,9 +78,16 @@ export class SemanticSearchService {
         dot += queryEmbedding[i] * faqEmbedding[i];
       }
 
-      // Keyword boost
+      // Keyword & question title token overlap boost
       const queryLower = query.toLowerCase();
       let kwBoost = 0;
+      const queryTokens = queryLower.split(/\s+/).filter(Boolean);
+      const questionTokens = faq.question.toLowerCase().split(/\s+/).filter(Boolean);
+      const overlap = queryTokens.filter((t) => questionTokens.includes(t)).length;
+      if (queryTokens.length > 0 && overlap > 0) {
+        kwBoost += (overlap / queryTokens.length) * 0.25;
+      }
+
       if (Array.isArray(faq.keywords)) {
         for (const kw of faq.keywords) {
           if (queryLower.includes(kw.toLowerCase())) kwBoost += 0.05;

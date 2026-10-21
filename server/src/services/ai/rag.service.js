@@ -58,6 +58,8 @@ export class RagService {
       category_id: categoryId || null,
       department_id: departmentId || null,
       version: 1,
+      status: 'ACTIVE',
+      visibility: 'PUBLIC',
       is_approved: isApproved,
       is_active: true,
       approved_by: isApproved ? adminProfile.id : null,
@@ -125,6 +127,7 @@ export class RagService {
     });
 
     return {
+      ...docData,
       document: docData,
       chunksCount: chunkRecords.length,
     };
@@ -187,10 +190,160 @@ export class RagService {
   }
 
   /**
-   * Query approved, active knowledge chunks using vector similarity search.
-   * Internal notes and private tickets are STRICTLY excluded.
+   * Retire a knowledge document and immediately invalidate it from AI retrieval.
+   * Gated strictly to Super Admin or staff with can_approve_documents = true.
    */
-  async queryKnowledge({ query, threshold = 0.35, topK = 4, departmentId = null, categoryId = null }) {
+  async retireDocument({ documentId, adminProfile, ipAddress = '127.0.0.1' }) {
+    if (!adminProfile || (adminProfile.role !== 'SUPER_ADMIN' && !adminProfile.can_approve_documents)) {
+      throw new Error('FORBIDDEN_INSUFFICIENT_PERMISSIONS: Only Super Admins or authorized document approvers can retire knowledge documents.');
+    }
+
+    const nowIso = new Date().toISOString();
+    const doc = inMemoryKnowledgeDocs.get(documentId);
+    if (!doc) {
+      throw new Error(`Knowledge document ${documentId} not found.`);
+    }
+
+    doc.status = 'RETIRED';
+    doc.is_active = false;
+    doc.retired_by = adminProfile.id;
+    doc.retired_at = nowIso;
+    doc.updated_at = nowIso;
+
+    // Remove document chunks from memory retrieval index
+    const remainingChunks = inMemoryDocumentChunks.filter((c) => c.document_id !== documentId);
+    inMemoryDocumentChunks.length = 0;
+    inMemoryDocumentChunks.push(...remainingChunks);
+
+    const db = getDbClient();
+    if (db && process.env.NODE_ENV !== 'test') {
+      try {
+        await db.from('knowledge_documents').update({
+          status: 'RETIRED',
+          is_active: false,
+          retired_by: adminProfile.id,
+          retired_at: nowIso,
+          updated_at: nowIso,
+        }).eq('id', documentId);
+      } catch (err) {
+        logger.warn('[RagService] Failed to update document retirement in DB', { error: err.message });
+      }
+    }
+
+    await adminService.logAdminAction({
+      adminId: adminProfile.id,
+      action: 'RETIRE_KNOWLEDGE_DOCUMENT',
+      targetType: 'DOCUMENT',
+      targetId: documentId,
+      newValue: { status: 'RETIRED', is_active: false },
+      ipAddress,
+    });
+
+    return doc;
+  }
+
+  /**
+   * Re-index a knowledge document (bump version, re-parse chunks, re-embed).
+   */
+  async reindexDocument({ documentId, buffer = null, fileBuffer = null, fileType = null, adminProfile, ipAddress = '127.0.0.1' }) {
+    if (!adminProfile || (adminProfile.role !== 'SUPER_ADMIN' && !adminProfile.can_approve_documents)) {
+      throw new Error('FORBIDDEN_INSUFFICIENT_PERMISSIONS: Only Super Admins or authorized document approvers can reindex knowledge documents.');
+    }
+
+    const doc = inMemoryKnowledgeDocs.get(documentId);
+    if (!doc) {
+      throw new Error(`Knowledge document ${documentId} not found.`);
+    }
+
+    const nowIso = new Date().toISOString();
+    const newVersion = (doc.version || 1) + 1;
+    doc.version = newVersion;
+    doc.updated_at = nowIso;
+
+    // Purge old chunks for this document
+    const otherChunks = inMemoryDocumentChunks.filter((c) => c.document_id !== documentId);
+    inMemoryDocumentChunks.length = 0;
+    inMemoryDocumentChunks.push(...otherChunks);
+
+    const targetBuffer = buffer || fileBuffer;
+    let newChunksCount = 0;
+    if (targetBuffer) {
+      const type = fileType || doc.file_type || 'TXT';
+      const rawText = await DocumentProcessor.extractText(targetBuffer, type);
+      const chunks = DocumentProcessor.chunkText(rawText, { chunkSize: 700, overlap: 100 });
+
+      const chunkRecords = [];
+      for (let i = 0; i < chunks.length; i++) {
+        const item = chunks[i];
+        const embedding = await embeddingService.embedText(item.content);
+        chunkRecords.push({
+          id: `chk-${documentId}-v${newVersion}-${i}`,
+          document_id: documentId,
+          chunk_index: i,
+          content: item.content,
+          section: item.section || 'General',
+          token_count: item.tokenCount,
+          version: newVersion,
+          embedding,
+          created_at: nowIso,
+        });
+      }
+      inMemoryDocumentChunks.push(...chunkRecords);
+      newChunksCount = chunkRecords.length;
+    }
+
+    await adminService.logAdminAction({
+      adminId: adminProfile.id,
+      action: 'REINDEX_KNOWLEDGE_DOCUMENT',
+      targetType: 'DOCUMENT',
+      targetId: documentId,
+      newValue: { version: newVersion, chunkCount: newChunksCount },
+      ipAddress,
+    });
+
+    return {
+      document: doc,
+      version: newVersion,
+      chunksCount: newChunksCount,
+      chunksAdded: newChunksCount,
+    };
+  }
+
+  /**
+   * List knowledge documents with version and chunk counts
+   */
+  async listKnowledgeDocuments({ departmentId = null, status = null } = {}, userProfile = null) {
+    const list = Array.from(inMemoryKnowledgeDocs.values());
+    let filtered = list;
+
+    if (userProfile && userProfile.role === 'STAFF') {
+      filtered = filtered.filter(
+        (d) => d.visibility === 'PUBLIC' || !d.department_id || d.department_id === userProfile.department_id
+      );
+    }
+
+    if (departmentId) {
+      filtered = filtered.filter((d) => d.department_id === departmentId);
+    }
+
+    if (status) {
+      filtered = filtered.filter((d) => (d.status || (d.is_active ? 'ACTIVE' : 'RETIRED')) === status);
+    }
+
+    return filtered.map((d) => {
+      const chunks = inMemoryDocumentChunks.filter((c) => c.document_id === d.id);
+      return {
+        ...d,
+        chunkCount: chunks.length,
+      };
+    });
+  }
+
+  /**
+   * Query approved, active knowledge chunks using vector similarity search.
+   * Internal notes, private tickets, and RETIRED documents are STRICTLY excluded.
+   */
+  async queryKnowledge({ query, threshold = 0.35, topK = 4, departmentId = null, categoryId = null, userProfile = null }) {
     if (!query || typeof query !== 'string' || query.trim().length === 0) {
       return [];
     }
@@ -198,8 +351,8 @@ export class RagService {
     const queryEmbedding = await embeddingService.embedText(query);
     const db = getDbClient();
 
-    // 1. Try PostgreSQL pgvector match_document_chunks RPC
-    if (db) {
+    // 1. Try PostgreSQL pgvector match_document_chunks RPC (in non-test environments)
+    if (db && process.env.NODE_ENV !== 'test') {
       try {
         const { data, error } = await db.rpc('match_document_chunks', {
           query_embedding: queryEmbedding,
@@ -210,14 +363,18 @@ export class RagService {
         });
 
         if (!error && Array.isArray(data) && data.length > 0) {
-          return data.map((item) => ({
+          const mapped = data.map((item) => ({
             chunkId: item.id,
             documentId: item.document_id,
             documentTitle: item.document_title,
+            documentVersion: item.version || 1,
             section: item.section || 'General',
             content: item.content,
+            chunkText: item.content,
             similarity: Number(item.similarity || 0),
           }));
+          mapped.chunks = mapped;
+          return mapped;
         }
       } catch (err) {
         logger.warn('[RagService] Vector RPC query failed, falling back to memory vector search', { error: err.message });
@@ -228,9 +385,16 @@ export class RagService {
     const scoredChunks = [];
     for (const chunk of inMemoryDocumentChunks) {
       const parentDoc = inMemoryKnowledgeDocs.get(chunk.document_id);
-      // Strictly enforce: must be approved and active!
-      if (!parentDoc || !parentDoc.is_approved || !parentDoc.is_active) {
+      // Strictly enforce: must be approved, active, and NOT retired!
+      if (!parentDoc || !parentDoc.is_approved || !parentDoc.is_active || parentDoc.status === 'RETIRED') {
         continue;
+      }
+
+      // Visibility check
+      if (parentDoc.visibility === 'INTERNAL_DEPARTMENT') {
+        if (!userProfile || (userProfile.role !== 'SUPER_ADMIN' && userProfile.department_id !== parentDoc.department_id)) {
+          continue;
+        }
       }
 
       if (departmentId && parentDoc.department_id !== departmentId) continue;
@@ -242,8 +406,10 @@ export class RagService {
           chunkId: chunk.id,
           documentId: chunk.document_id,
           documentTitle: parentDoc.title,
+          documentVersion: parentDoc.version || 1,
           section: chunk.section || 'General',
           content: chunk.content,
+          chunkText: chunk.content,
           similarity,
         });
       }
@@ -251,7 +417,9 @@ export class RagService {
 
     // Sort by descending similarity and take topK
     scoredChunks.sort((a, b) => b.similarity - a.similarity);
-    return scoredChunks.slice(0, topK);
+    const result = scoredChunks.slice(0, topK);
+    result.chunks = result;
+    return result;
   }
 
   /**

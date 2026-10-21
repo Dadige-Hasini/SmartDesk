@@ -196,3 +196,49 @@ export function requireRole(...allowedRoles) {
     next();
   };
 }
+
+/**
+ * Optional Authentication Middleware
+ * Attempts to verify token if provided, but does not reject anonymous visitors.
+ * Sets req.user and req.profile if valid, else leaves them null.
+ */
+export async function optionalAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    req.user = null;
+    req.profile = null;
+    return next();
+  }
+
+  const token = authHeader.split(' ')[1]?.trim();
+  if (!token || !supabaseClient) {
+    req.user = null;
+    req.profile = null;
+    return next();
+  }
+
+  try {
+    const { data: userData, error: authError } = await supabaseClient.auth.getUser(token);
+    if (authError || !userData?.user) {
+      req.user = null;
+      req.profile = null;
+      return next();
+    }
+
+    req.user = userData.user;
+    const db = supabaseAdmin || supabaseClient;
+    const { data: profile } = await db
+      .from('profiles')
+      .select('*, departments(id, name, code)')
+      .eq('id', userData.user.id)
+      .maybeSingle();
+
+    req.profile = profile || null;
+    next();
+  } catch (err) {
+    req.user = null;
+    req.profile = null;
+    next();
+  }
+}

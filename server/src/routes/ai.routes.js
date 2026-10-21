@@ -58,7 +58,14 @@ router.post(
   AiController.summarizeTicket
 );
 
-// Document Ingestion & Approval (Staff / Super Admin only)
+// Document Ingestion, Lifecycle & Approval (Staff / Super Admin only)
+router.get(
+  '/documents',
+  requireAuth,
+  requireRole('STAFF', 'SUPER_ADMIN'),
+  AiController.listDocuments
+);
+
 router.post(
   '/documents/upload',
   requireAuth,
@@ -72,6 +79,21 @@ router.put(
   requireAuth,
   requireRole('STAFF', 'SUPER_ADMIN'),
   AiController.approveDocument
+);
+
+router.post(
+  '/documents/:id/retire',
+  requireAuth,
+  requireRole('STAFF', 'SUPER_ADMIN'),
+  AiController.retireDocument
+);
+
+router.post(
+  '/documents/:id/reindex',
+  requireAuth,
+  requireRole('STAFF', 'SUPER_ADMIN'),
+  upload.single('file'),
+  AiController.reindexDocument
 );
 
 export default router;

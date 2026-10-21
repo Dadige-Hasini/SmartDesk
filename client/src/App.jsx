@@ -18,6 +18,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import StaffDashboardPage from './pages/StaffDashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import AiChatPage from './pages/AiChatPage';
+import PublicFaqPage from './pages/PublicFaqPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const queryClient = new QueryClient({
@@ -52,6 +53,8 @@ export default function App() {
                 <Route index element={<HomePage />} />
                 <Route path="login" element={<LoginPage />} />
                 <Route path="register" element={<RegisterPage />} />
+                <Route path="faqs" element={<PublicFaqPage />} />
+                <Route path="faq" element={<PublicFaqPage />} />
                 <Route
                   path="dashboard"
                   element={

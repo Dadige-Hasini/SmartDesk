@@ -19,6 +19,7 @@ import {
   Send,
   Loader2,
   History,
+  BookOpen,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatToIST } from '../utils/date';
@@ -39,6 +40,13 @@ export default function TicketDetailPage() {
   const [rejectionReason, setRejectionReason] = useState('');
   const [reopenModalOpen, setReopenModalOpen] = useState(false);
   const [reopenReason, setReopenReason] = useState('');
+
+  // Phase 8: Promote to FAQ Draft states
+  const [faqModalOpen, setFaqModalOpen] = useState(false);
+  const [faqQuestion, setFaqQuestion] = useState('');
+  const [faqAnswer, setFaqAnswer] = useState('');
+  const [faqKeywords, setFaqKeywords] = useState('');
+  const [submittingFaqDraft, setSubmittingFaqDraft] = useState(false);
 
   // Rating state
   const [ratingVal, setRatingVal] = useState(5);
@@ -196,6 +204,45 @@ export default function TicketDetailPage() {
       toast.error(err.message || 'Failed to submit rating');
     } finally {
       setSubmittingRating(false);
+    }
+  };
+
+  const handlePromoteToFaq = async (e) => {
+    e.preventDefault();
+    if (!faqQuestion.trim() || faqQuestion.trim().length < 5) {
+      toast.error('Question must be at least 5 characters');
+      return;
+    }
+    if (!faqAnswer.trim() || faqAnswer.trim().length < 10) {
+      toast.error('Answer must be at least 10 characters');
+      return;
+    }
+
+    setSubmittingFaqDraft(true);
+    try {
+      const keywordsArray = faqKeywords
+        .split(',')
+        .map((k) => k.trim())
+        .filter(Boolean);
+
+      await api.post('/faqs/draft-from-ticket', {
+        ticketId: ticket.id,
+        question: faqQuestion.trim(),
+        answer: faqAnswer.trim(),
+        categoryId: ticket.category_id,
+        departmentId: ticket.assigned_department_id,
+        keywords: keywordsArray,
+      });
+
+      toast.success('Solution promoted to FAQ draft! Pending Super Admin review & publication.', {
+        icon: '📚',
+        duration: 5000,
+      });
+      setFaqModalOpen(false);
+    } catch (err) {
+      toast.error(err.message || 'Failed to submit FAQ draft');
+    } finally {
+      setSubmittingFaqDraft(false);
     }
   };
 
@@ -359,6 +406,24 @@ export default function TicketDetailPage() {
                   <span>Reject</span>
                 </button>
               </>
+            )}
+
+            {/* Promote Solution to Knowledge Base FAQ Draft (Staff / Super Admin) */}
+            {canTriage && (ticket.status === 'RESOLVED' || ticket.status === 'CLOSED') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFaqQuestion(ticket.title || '');
+                  setFaqAnswer(ticket.resolution_summary || ticket.description || '');
+                  setFaqKeywords(Array.isArray(ticket.tags) ? ticket.tags.join(', ') : '');
+                  setFaqModalOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-colors"
+                title="Create an FAQ draft from this ticket solution for Super Admin review"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Promote to FAQ Draft</span>
+              </button>
             )}
           </div>
 
@@ -595,6 +660,100 @@ export default function TicketDetailPage() {
                   className="px-4 py-2 rounded-xl bg-amber-500 text-white text-xs font-semibold"
                 >
                   Submit Reopening
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Promote to FAQ Draft Modal */}
+      {faqModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/70 backdrop-blur-sm">
+          <div className="w-full max-w-lg bg-white dark:bg-navy-900 rounded-3xl p-6 shadow-2xl border border-gray-200 dark:border-navy-800 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
+                  Promote Solution to FAQ Draft
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Transform this resolved student ticket into a general knowledge base solution.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handlePromoteToFaq} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  FAQ Question Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={faqQuestion}
+                  onChange={(e) => setFaqQuestion(e.target.value)}
+                  placeholder="e.g. How do I register a laptop MAC address for WiFi?"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  Approved Answer & Procedure *
+                </label>
+                <textarea
+                  required
+                  rows={5}
+                  value={faqAnswer}
+                  onChange={(e) => setFaqAnswer(e.target.value)}
+                  placeholder="Clear, step-by-step resolution that can help any student encountering this issue..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 leading-relaxed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  Search Keywords (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={faqKeywords}
+                  onChange={(e) => setFaqKeywords(e.target.value)}
+                  placeholder="wifi, mac address, hostel, network"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300">
+                <span className="font-bold">Lifecycle Note:</span> This FAQ will be saved with status{' '}
+                <span className="font-mono font-bold">DRAFT</span>. It will not be visible on the public FAQ
+                page or in AI retrieval until reviewed and published by a Super Admin.
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setFaqModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-gray-300 dark:border-navy-700 text-xs font-semibold hover:bg-gray-100 dark:hover:bg-navy-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingFaqDraft}
+                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-md transition-colors flex items-center gap-1.5"
+                >
+                  {submittingFaqDraft ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Submitting...</span>
+                    </>
+                  ) : (
+                    <span>Submit FAQ Draft</span>
+                  )}
                 </button>
               </div>
             </form>

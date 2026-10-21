@@ -22,6 +22,7 @@ import {
   User,
   Building2,
   ShieldCheck,
+  HelpCircle,
 } from 'lucide-react';
 
 export default function RootLayout() {
@@ -34,6 +35,7 @@ export default function RootLayout() {
   if (!isAuthenticated) {
     navigation = [
       { name: 'Home', href: '/', icon: Home },
+      { name: 'FAQs', href: '/faqs', icon: HelpCircle },
       { name: 'AI Assistant', href: '/ai-chat', icon: Bot },
       { name: 'Tickets', href: '/tickets', icon: Ticket },
     ];
@@ -41,6 +43,7 @@ export default function RootLayout() {
     navigation = [
       { name: 'Admin Console', href: '/admin', icon: ShieldCheck },
       { name: 'Staff Queue', href: '/staff', icon: Building2 },
+      { name: 'FAQs', href: '/faqs', icon: HelpCircle },
       { name: 'AI Assistant', href: '/ai-chat', icon: Bot },
       { name: 'All Tickets', href: '/tickets', icon: Ticket },
       { name: 'Profile', href: '/profile', icon: User },
@@ -48,6 +51,7 @@ export default function RootLayout() {
   } else if (role === 'STAFF') {
     navigation = [
       { name: 'Department Queue', href: '/staff', icon: Building2 },
+      { name: 'FAQs', href: '/faqs', icon: HelpCircle },
       { name: 'AI Assistant', href: '/ai-chat', icon: Bot },
       { name: 'My Tickets', href: '/tickets', icon: Ticket },
       { name: 'New Ticket', href: '/tickets/new', icon: PlusCircle },
@@ -57,6 +61,7 @@ export default function RootLayout() {
     // Default student navigation
     navigation = [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'FAQs', href: '/faqs', icon: HelpCircle },
       { name: 'My Tickets', href: '/tickets', icon: Ticket },
       { name: 'New Ticket', href: '/tickets/new', icon: PlusCircle },
       { name: 'AI Assistant', href: '/ai-chat', icon: Bot },
@@ -255,6 +260,10 @@ export default function RootLayout() {
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               All Systems Operational
             </span>
+            <span className="text-gray-400">|</span>
+            <Link to="/faqs" className="hover:text-coral-500 transition-colors">
+              Knowledge Base & FAQs
+            </Link>
             <span className="text-gray-400">|</span>
             <span>Version 1.0.0</span>
           </div>

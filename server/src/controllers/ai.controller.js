@@ -192,6 +192,74 @@ export class AiController {
   }
 
   /**
+   * List Knowledge Documents
+   * GET /api/ai/documents
+   */
+  static async listDocuments(req, res, next) {
+    try {
+      const { status, departmentId } = req.query;
+      const docs = await ragService.listKnowledgeDocuments({ status, departmentId });
+      return sendSuccess(res, 'Knowledge documents retrieved successfully', docs);
+    } catch (err) {
+      logger.error('[AiController.listDocuments] Error listing documents', { error: err.message });
+      next(err);
+    }
+  }
+
+  /**
+   * Retire a Knowledge Document (Invalidate from AI retrieval pipeline)
+   * POST /api/ai/documents/:id/retire
+   */
+  static async retireDocument(req, res, next) {
+    try {
+      const { id } = req.params;
+      const doc = await ragService.retireDocument({
+        documentId: id,
+        adminProfile: req.profile || req.user,
+        ipAddress: req.ip,
+      });
+      return sendSuccess(res, 'Document retired and purged from active AI retrieval pipeline.', doc);
+    } catch (err) {
+      if (err.message && err.message.includes('FORBIDDEN')) {
+        return sendError(res, err.message, { code: 'FORBIDDEN_INSUFFICIENT_PERMISSIONS' }, 403);
+      }
+      next(err);
+    }
+  }
+
+  /**
+   * Re-index a Knowledge Document with updated file content
+   * POST /api/ai/documents/:id/reindex
+   */
+  static async reindexDocument(req, res, next) {
+    try {
+      const { id } = req.params;
+      const file = req.file;
+      const { title, description } = req.body;
+
+      const ext = file ? (file.originalname?.split('.').pop()?.toUpperCase() || 'TXT') : null;
+
+      const result = await ragService.reindexDocument({
+        documentId: id,
+        fileBuffer: file?.buffer || null,
+        fileType: ext,
+        title,
+        description,
+        adminProfile: req.profile || req.user,
+        ipAddress: req.ip,
+      });
+
+      return sendSuccess(res, 'Document successfully re-indexed to new version.', result);
+    } catch (err) {
+      if (err.message && err.message.includes('FORBIDDEN')) {
+        return sendError(res, err.message, { code: 'FORBIDDEN_INSUFFICIENT_PERMISSIONS' }, 403);
+      }
+      logger.error('[AiController.reindexDocument] Error re-indexing document', { error: err.message });
+      next(err);
+    }
+  }
+
+  /**
    * Predict Category from Query using ML Classifier
    * POST /api/ai/classify-query
    */
