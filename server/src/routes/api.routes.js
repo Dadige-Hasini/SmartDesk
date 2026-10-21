@@ -6,6 +6,7 @@ import notificationRoutes from './notification.routes.js';
 import adminRoutes from './admin.routes.js';
 import staffRoutes from './staff.routes.js';
 import announcementRoutes from './announcement.routes.js';
+import aiRoutes from './ai.routes.js';
 import { sendSuccess } from '../utils/response.js';
 
 const router = Router();
@@ -30,6 +31,9 @@ router.use('/staff', staffRoutes);
 
 // Phase 5: Public/User Announcements
 router.use('/announcements', announcementRoutes);
+
+// Phase 6: Production-Oriented AI Assistant & RAG routes
+router.use('/ai', aiRoutes);
 
 // Root API information
 router.get('/', (req, res) => {

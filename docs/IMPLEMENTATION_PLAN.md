@@ -219,4 +219,17 @@ SmartDesk is an AI-powered college student support portal built with modern full
     - Server-side scheduled SLA watchdog daemon (`sla.worker.js`) running every 30 seconds independently of browser sessions.
     - Formal metric definitions document (`docs/PHASE5_METRICS_AND_GOVERNANCE.md`) detailing treatment of reopened tickets, paused SLAs (`AWAITING_INFO`), and unresolved cases.
     - 100% test pass rate across backend (64 tests across 6 suites) and client (18 tests across 4 suites) with clean production build.
-- **Next Phase**: Phase 6 (AI Assistant & Deep Learning Integration: Document Chunking, pgvector Embeddings, Grounded RAG, and Intent Classifier).
+  - **Phase 6**: Production-Oriented AI Assistant & Grounded RAG Pipeline
+    - Complete RAG Pipeline with Document Ingestion: Admin document upload for PDF, DOCX, TXT, MD via `pdf-parse` and `mammoth` with section-aware chunking and token counting.
+    - Supabase PostgreSQL with `pgvector` (`vector(768)`): Stored chunks, document versioning, departmental metadata, HNSW cosine index, and `match_document_chunks` RPC similarity search.
+    - Provider-Independent LLM Interface (`llm.provider.interface.js`): Base contract with unified `generateCompletion` and `validateConfig`. Concrete providers for Google Gemini (`gemini.provider.js`), OpenAI (`openai.provider.js`), and deterministic test/offline fallback (`mock.provider.js`).
+    - Configurable Embedding Service (`embedding.service.js`): 768-dimensional normalized embeddings with Google Gemini / OpenAI embeddings and deterministic cosine-preserving fallback.
+    - Grounded Q&A Controller (`POST /api/ai/chat`): Injects retrieved knowledge chunks into strict system prompt forbidding hallucinations or ungrounded claims. Returns source citations with document titles and sections, confidence scoring, and evidence verification indicator (`hasSufficientEvidence`).
+    - Grounded Abstention & Fallback: Generates explicit abstention when evidence is insufficient and automatically offers ticket creation handoff.
+    - AI Ticket Assistance (`POST /api/ai/suggest-ticket`): Analyzes inquiries to suggest category, responsible department, title, description, priority, and missing information. Validated by deterministic server rules, requiring student review and explicit submission.
+    - Helpfulness Feedback Loop (`POST /api/ai/feedback`): Records thumbs up/down, feedback reasons, and citations in `ai_feedback` table.
+    - Staff Ticket Summarization (`POST /api/ai/summarize-ticket`): Generates executive ticket summaries restricted strictly to authorized department staff and Super Admins (enforces 403 Forbidden on department mismatches).
+    - Security & Prompt Injection Defense: Neutralizes adversarial prompts attempting to override college rules or simulate transactions. Never exposes LLM API keys to browser. Rate limiting (30 req/min) and 1,000 char input limits.
+    - React Frontend AI Interface: Dedicated AI Assistant Page (`/ai-chat`), floating AI Chat Widget (`AiChatWidget.jsx`), conversation history, citations accordion, evidence badge, quick prompt chips, and prefilled ticket handoff to `CreateTicketPage.jsx`.
+    - Verification & Testing: 100% test pass rate across all 7 backend test suites (77 tests) and all 5 client test suites (23 tests). Verified via browser subagent recording (`phase6_ai_assistant_verification_1792562119817.webp`).
+- **Next Phase**: Production deployment preparation, performance tuning, and final end-to-end audit.

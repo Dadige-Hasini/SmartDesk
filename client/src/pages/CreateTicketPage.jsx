@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -17,6 +17,7 @@ import {
   AlertCircle,
   Loader2,
   Sparkles,
+  Bot,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -26,15 +27,22 @@ const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'pdf', 'docx'];
 
 export default function CreateTicketPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { user, profile } = useAuth();
 
+  // Prefilled AI draft support
+  const prefillData = location.state?.prefilled || null;
+  const isAiPrefilled = Boolean(prefillData || location.state?.aiAssisted);
+
   // Form Fields
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [priority, setPriority] = useState('Medium');
-  const [tagsInput, setTagsInput] = useState('');
+  const [title, setTitle] = useState(prefillData?.title || '');
+  const [description, setDescription] = useState(prefillData?.description || '');
+  const [categoryId, setCategoryId] = useState(prefillData?.categoryId || '');
+  const [priority, setPriority] = useState(prefillData?.priority || 'Medium');
+  const [tagsInput, setTagsInput] = useState(
+    Array.isArray(prefillData?.tags) ? prefillData.tags.join(', ') : ''
+  );
   const [isConfidential, setIsConfidential] = useState(false);
 
   // Attachments
@@ -54,8 +62,12 @@ export default function CreateTicketPage() {
         const res = await api.get('/tickets/meta/categories');
         const cats = res?.data?.data || [];
         setCategories(cats);
+        // If not already set by AI prefill or selection, choose first
         if (cats.length > 0 && !categoryId) {
-          setCategoryId(cats[0].id);
+          const matched = prefillData?.categoryId
+            ? cats.find((c) => c.id === prefillData.categoryId)
+            : null;
+          setCategoryId(matched ? matched.id : cats[0].id);
         }
       } catch {
         toast.error('Failed to load categories');
@@ -64,7 +76,7 @@ export default function CreateTicketPage() {
       }
     }
     loadCategories();
-  }, []);
+  }, [prefillData]);
 
   const selectedCategory = categories.find((c) => c.id === categoryId);
 
@@ -210,6 +222,30 @@ export default function CreateTicketPage() {
               </p>
             </div>
           </div>
+
+          {/* AI Pre-fill Notice Banner */}
+          {isAiPrefilled && (
+            <div className="mt-4 p-4 rounded-2xl bg-coral-500/10 border border-coral-500/20 flex items-start gap-3 text-xs text-coral-700 dark:text-coral-300 animate-fadeIn">
+              <Bot className="w-5 h-5 text-coral-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold flex items-center gap-1.5">
+                  Prefilled by SmartDesk AI Assistant
+                  <span className="px-1.5 py-0.5 rounded bg-coral-500/20 text-[10px] uppercase font-bold text-coral-600 dark:text-coral-300">
+                    Draft Review
+                  </span>
+                </p>
+                <p className="mt-1 text-gray-600 dark:text-gray-400">
+                  The AI assistant proposed this ticket category, department routing, and description based on your inquiry.
+                  Deterministic server rules require your explicit review and submission. Feel free to adjust any fields.
+                </p>
+                {prefillData?.suggestedDepartment && (
+                  <p className="mt-1 font-semibold text-coral-600 dark:text-coral-400">
+                    Routing to Department: {prefillData.suggestedDepartment}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Form Body */}

@@ -17,6 +17,7 @@ import ProfilePage from './pages/ProfilePage';
 import NotificationsPage from './pages/NotificationsPage';
 import StaffDashboardPage from './pages/StaffDashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import AiChatPage from './pages/AiChatPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const queryClient = new QueryClient({
@@ -79,12 +80,7 @@ export default function App() {
                   path="ai-chat"
                   element={
                     <ProtectedRoute>
-                      <div className="p-8 text-center bg-white dark:bg-navy-900 rounded-2xl border border-gray-200 dark:border-navy-800">
-                        <h2 className="text-2xl font-bold mb-2">AI Help Assistant</h2>
-                        <p className="text-gray-500">
-                          RAG pipeline and pgvector integration scheduled for Phase 5.
-                        </p>
-                      </div>
+                      <AiChatPage />
                     </ProtectedRoute>
                   }
                 />

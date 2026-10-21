@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import NotificationsBell from '../components/NotificationsBell';
+import AiChatWidget from '../components/AiChatWidget';
 import {
   Sun,
   Moon,
@@ -33,19 +34,21 @@ export default function RootLayout() {
   if (!isAuthenticated) {
     navigation = [
       { name: 'Home', href: '/', icon: Home },
-      { name: 'AI Assistant', href: '/ai-chat', icon: Bot, badge: 'Phase 6' },
+      { name: 'AI Assistant', href: '/ai-chat', icon: Bot },
       { name: 'Tickets', href: '/tickets', icon: Ticket },
     ];
   } else if (role === 'SUPER_ADMIN') {
     navigation = [
       { name: 'Admin Console', href: '/admin', icon: ShieldCheck },
       { name: 'Staff Queue', href: '/staff', icon: Building2 },
+      { name: 'AI Assistant', href: '/ai-chat', icon: Bot },
       { name: 'All Tickets', href: '/tickets', icon: Ticket },
       { name: 'Profile', href: '/profile', icon: User },
     ];
   } else if (role === 'STAFF') {
     navigation = [
       { name: 'Department Queue', href: '/staff', icon: Building2 },
+      { name: 'AI Assistant', href: '/ai-chat', icon: Bot },
       { name: 'My Tickets', href: '/tickets', icon: Ticket },
       { name: 'New Ticket', href: '/tickets/new', icon: PlusCircle },
       { name: 'Profile', href: '/profile', icon: User },
@@ -56,7 +59,7 @@ export default function RootLayout() {
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       { name: 'My Tickets', href: '/tickets', icon: Ticket },
       { name: 'New Ticket', href: '/tickets/new', icon: PlusCircle },
-      { name: 'AI Assistant', href: '/ai-chat', icon: Bot, badge: 'Phase 6' },
+      { name: 'AI Assistant', href: '/ai-chat', icon: Bot },
       { name: 'Profile', href: '/profile', icon: User },
     ];
   }
@@ -257,6 +260,9 @@ export default function RootLayout() {
           </div>
         </div>
       </footer>
+
+      {/* Floating AI Assistant Chat Widget */}
+      <AiChatWidget />
     </div>
   );
 }
