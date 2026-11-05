@@ -92,7 +92,7 @@ BEGIN
     AND (filter_department_id IS NULL OR kd.department_id = filter_department_id)
     AND (filter_category_id IS NULL OR kd.category_id = filter_category_id)
     AND 1 - (dc.embedding <=> query_embedding) > match_threshold
-  ORDER JOIN dc.embedding <=> query_embedding
+  ORDER BY dc.embedding <=> query_embedding
   LIMIT match_count;
 END;
 $$;

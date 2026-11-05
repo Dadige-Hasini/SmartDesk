@@ -9,9 +9,9 @@ export class CommentController {
   static async listComments(req, res, next) {
     try {
       const ticketId = req.params.id;
-      const user = req.user;
-      const role = req.userRole;
-      const departmentId = req.userDepartmentId;
+      const user = req.profile || req.user;
+      const role = req.profile?.role || req.userRole;
+      const departmentId = req.profile?.department_id || req.userDepartmentId;
 
       const comments = await CommentService.getTicketComments(ticketId, user, role, departmentId);
       return responseHandler.success(res, { comments });
@@ -26,9 +26,9 @@ export class CommentController {
   static async createComment(req, res, next) {
     try {
       const ticketId = req.params.id;
-      const user = req.user;
-      const role = req.userRole;
-      const departmentId = req.userDepartmentId;
+      const user = req.profile || req.user;
+      const role = req.profile?.role || req.userRole;
+      const departmentId = req.profile?.department_id || req.userDepartmentId;
 
       const { content, isInternal } = req.body;
 

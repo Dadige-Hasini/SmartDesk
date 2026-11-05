@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
+import { supabase } from '../config/supabase';
 import { useAuth } from '../context/AuthContext';
 import CreateTicketModal from '../components/CreateTicketModal';
 import {
@@ -22,6 +23,7 @@ import {
   ChevronRight,
   Shield,
   Loader2,
+  MessageSquareCode,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatToIST, formatRelativeIST } from '../utils/date';
@@ -43,6 +45,8 @@ export default function TicketsPage() {
   const [totalTickets, setTotalTickets] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [showQueries, setShowQueries] = useState(false);
+  const [queriesCount, setQueriesCount] = useState(0);
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedTicketIds, setSelectedTicketIds] = useState([]);
@@ -58,17 +62,29 @@ export default function TicketsPage() {
     if (statusFilter) params.set('status', statusFilter);
     if (priorityFilter) params.set('priority', priorityFilter);
     params.set('page', page.toString());
-    params.set('limit', '10');
+    params.set('limit', '50'); // fetch batch for client filtering
     params.set('sortBy', sortBy);
     params.set('sortOrder', sortOrder);
 
     api
       .get(`/tickets?${params.toString()}`)
       .then((res) => {
-        const data = res.data;
-        setTickets(data.tickets || []);
-        setTotalTickets(data.total || 0);
-        setTotalPages(data.totalPages || 1);
+        const payload = res?.data || res;
+        const list = Array.isArray(payload) ? payload : (payload?.tickets || []);
+
+        // Distinguish conversational queries (information requests) vs standard support tickets
+        const isQueryTicket = (t) =>
+          (Array.isArray(t.tags) && t.tags.includes('WORKFLOW:INFORMATION_REQUEST')) ||
+          (typeof t.title === 'string' && t.title.toLowerCase().startsWith('information request:')) ||
+          t.request_type === 'INFORMATION_REQUEST';
+
+        const qCount = list.filter(isQueryTicket).length;
+        setQueriesCount(qCount);
+
+        const displayedList = showQueries ? list : list.filter((t) => !isQueryTicket(t));
+        setTickets(displayedList);
+        setTotalTickets(displayedList.length);
+        setTotalPages(Math.max(1, Math.ceil(displayedList.length / 10)));
         setLoading(false);
       })
       .catch((err) => {
@@ -76,11 +92,74 @@ export default function TicketsPage() {
         toast.error(err.message || 'Error fetching tickets');
         setLoading(false);
       });
-  }, [search, statusFilter, priorityFilter, page, sortBy, sortOrder]);
+  }, [search, statusFilter, priorityFilter, page, sortBy, sortOrder, showQueries]);
 
   useEffect(() => {
     fetchTickets();
-  }, [fetchTickets]);
+
+    // 1. Supabase Realtime synchronization
+    let channel = null;
+    if (supabase && typeof supabase.channel === 'function' && user?.id) {
+      try {
+        const filterStr =
+          role === 'STUDENT'
+            ? `created_by=eq.${user.id}`
+            : (profile?.department_id ? `assigned_department_id=eq.${profile.department_id}` : undefined);
+
+        channel = supabase
+          .channel(`public:tickets:sync:${user.id}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'tickets',
+              ...(filterStr ? { filter: filterStr } : {}),
+            },
+            () => {
+              fetchTickets();
+            }
+          )
+          .subscribe((status) => {
+            if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+              fetchTickets();
+            }
+          });
+      } catch (e) {
+        console.debug('Realtime tickets subscription notice:', e?.message);
+      }
+    }
+
+    // 2. Reconnection and Focus Event Synchronization
+    const handleFocus = () => fetchTickets();
+    const handleOnline = () => {
+      toast.success('Connection restored. Updating tickets...', { id: 'online-sync-toast', duration: 2500 });
+      fetchTickets();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('online', handleOnline);
+
+    // 3. Reliable periodic polling fallback (every 20s)
+    let intervalId = null;
+    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'test') {
+      intervalId = setInterval(() => {
+        fetchTickets();
+      }, 20000);
+      if (typeof intervalId?.unref === 'function') intervalId.unref();
+    }
+
+    return () => {
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch {}
+      }
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('online', handleOnline);
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [fetchTickets, user?.id, profile?.department_id, role]);
 
   const updateParam = (key, value) => {
     const next = new URLSearchParams(searchParams);
@@ -237,7 +316,7 @@ export default function TicketsPage() {
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-navy-900 dark:text-white flex items-center gap-2.5">
             <Ticket className="w-7 h-7 text-coral-500" />
-            <span>Support Tickets</span>
+            <span>{role === 'STUDENT' ? 'My Support Tickets' : 'Support Tickets'}</span>
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             {isStaffOrAdmin
@@ -266,6 +345,47 @@ export default function TicketsPage() {
             <Plus className="w-4 h-4" />
             <span>Raise Ticket</span>
           </button>
+        </div>
+      </div>
+
+      {/* Student Queries Dedicated Banner */}
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-sky-500/10 to-coral-500/10 border border-indigo-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+            <MessageSquareCode className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-bold text-gray-900 dark:text-white">
+                Looking for your Student Queries or AI Information Requests?
+              </p>
+              {queriesCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500 text-white">
+                  {queriesCount} Active
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+              Conversational inquiries with department staff have their own dedicated section with real-time discussions.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+          <button
+            type="button"
+            onClick={() => setShowQueries(!showQueries)}
+            className="text-[11px] font-semibold text-gray-600 dark:text-gray-300 hover:underline px-2.5 py-1"
+          >
+            {showQueries ? 'Show Support Tickets Only' : 'Include Queries in List'}
+          </button>
+          <Link
+            to="/queries"
+            className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex items-center gap-1.5"
+          >
+            <span>Open Student Queries</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
       </div>
 
@@ -385,8 +505,9 @@ export default function TicketsPage() {
                   <th className="px-4 py-4">Category</th>
                   <th className="px-4 py-4">Priority</th>
                   <th className="px-4 py-4">Status</th>
-                  <th className="px-4 py-4">Department</th>
-                  <th className="px-4 py-4">Created</th>
+                  <th className="px-4 py-4">Assigned Department</th>
+                  <th className="px-4 py-4">SLA Target</th>
+                  <th className="px-4 py-4">Created / Updated</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-navy-800">
@@ -443,11 +564,18 @@ export default function TicketsPage() {
                         {renderPriorityBadge(t.priority)}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
-                        {renderStatusBadge(t.status)}
+                        <div className="flex items-center gap-1.5">
+                          {renderStatusBadge(t.status)}
+                          {t.status === 'AWAITING_INFO' && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                              Action Needed
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
                         <div className="text-xs font-medium text-gray-900 dark:text-white">
-                          {t.assigned_department?.name || 'Department'}
+                          {t.assigned_department?.name || 'Department Desk'}
                         </div>
                         {t.student_department && (
                           <div className="text-[10px] text-gray-400">
@@ -456,7 +584,17 @@ export default function TicketsPage() {
                         )}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
-                        <span title={formatToIST(t.created_at)}>{formatRelativeIST(t.created_at)}</span>
+                        <div className="font-medium text-gray-700 dark:text-gray-300">
+                          {t.sla_due_at ? formatToIST(t.sla_due_at) : (t.resolution_due_at ? formatToIST(t.resolution_due_at) : 'Standard 24h SLA')}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400">
+                        <div title={formatToIST(t.created_at)}>{formatRelativeIST(t.created_at)}</div>
+                        {t.updated_at && t.updated_at !== t.created_at && (
+                          <div className="text-[10px] text-gray-400">
+                            Updated {formatRelativeIST(t.updated_at)}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );

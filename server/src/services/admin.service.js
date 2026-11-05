@@ -3,6 +3,7 @@ import { logger } from '../utils/logger.js';
 import { ticketRepository, inMemoryProfiles, inMemoryTickets } from '../repositories/ticket.repository.js';
 
 function getDbClient() {
+  if (process.env.NODE_ENV === 'test') return null;
   return supabaseAdmin || supabaseClient;
 }
 
@@ -59,7 +60,9 @@ export class AdminService {
           .order('created_at', { ascending: false });
 
         if (status) q = q.eq('status', status);
-        if (departmentId) q = q.eq('department_id', departmentId);
+        if (departmentId && departmentId !== 'all') {
+          q = q.or(`department_id.eq.${departmentId},role.eq.SUPER_ADMIN`);
+        }
 
         const { data, error } = await q;
         if (!error && data) {
@@ -85,7 +88,9 @@ export class AdminService {
       (p) => p.role === 'STAFF' || p.role === 'SUPER_ADMIN'
     );
     if (status) staffList = staffList.filter((s) => s.status === status);
-    if (departmentId) staffList = staffList.filter((s) => s.department_id === departmentId);
+    if (departmentId && departmentId !== 'all') {
+      staffList = staffList.filter((s) => s.department_id === departmentId || s.role === 'SUPER_ADMIN');
+    }
     if (search) {
       const s = search.toLowerCase();
       staffList = staffList.filter(
@@ -164,6 +169,53 @@ export class AdminService {
     });
 
     return memStaff;
+  }
+
+  async updateStaffDepartment(staffId, { departmentId }, adminProfile, ipAddress) {
+    const db = getDbClient();
+    let oldProfile = null;
+
+    if (db) {
+      try {
+        const { data: current } = await db.from('profiles').select('*').eq('id', staffId).maybeSingle();
+        oldProfile = current;
+
+        const { data, error } = await db
+          .from('profiles')
+          .update({
+            department_id: departmentId || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', staffId)
+          .select('*, department:departments(id, name, code)')
+          .maybeSingle();
+
+        if (error) throw new Error(error.message);
+
+        if (data) {
+          await this.logAdminAction({
+            adminId: adminProfile.id,
+            action: 'STAFF_DEPARTMENT_UPDATED',
+            targetType: 'STAFF',
+            targetId: staffId,
+            reason: `Staff department updated to ${data.department?.name || 'Unassigned'}`,
+            oldValue: { department_id: oldProfile?.department_id },
+            newValue: { department_id: departmentId },
+            ipAddress,
+          });
+          return data;
+        }
+      } catch (err) {
+        logger.error('Failed to update staff department in database', { error: err.message });
+        throw err;
+      }
+    }
+
+    const mem = inMemoryProfiles.get(staffId);
+    if (!mem) throw new Error('Staff member not found');
+    mem.department_id = departmentId;
+    inMemoryProfiles.set(staffId, mem);
+    return mem;
   }
 
   async updateStaffPermissions(staffId, { canApproveDocuments }, adminProfile, ipAddress) {
@@ -416,12 +468,13 @@ export class AdminService {
       }
     }
     return [
-      { id: '11111111-1111-1111-1111-111111111111', name: 'Computer Science & Engineering', code: 'CSE', is_active: true },
+      { id: '11111111-1111-1111-1111-111111111111', name: 'Information Technology (IT Services)', code: 'IT', is_active: true },
       { id: '22222222-2222-2222-2222-222222222222', name: 'Electronics & Communication', code: 'ECE', is_active: true },
       { id: '33333333-3333-3333-3333-333333333333', name: 'Hostel & Student Housing', code: 'HOSTEL', is_active: true },
       { id: '44444444-4444-4444-4444-444444444444', name: 'Finance & Accounts Office', code: 'FIN', is_active: true },
       { id: '55555555-5555-5555-5555-555555555555', name: 'Central Library', code: 'LIB', is_active: true },
       { id: '66666666-6666-6666-6666-666666666666', name: 'Examination & Evaluation Cell', code: 'EXAM', is_active: true },
+      { id: '77777777-7777-7777-7777-777777777777', name: 'Student Affairs & Grievance Cell', code: 'STU', is_active: true },
     ];
   }
 
@@ -531,6 +584,7 @@ export class AdminService {
       { id: 'cat-wifi', name: 'Hostel WiFi & Network', code: 'HOSTEL_WIFI', is_active: true },
       { id: 'cat-fee', name: 'Fee Receipts & Dues', code: 'FIN_FEES', is_active: true },
       { id: 'cat-exam', name: 'Exam Grades & Transcripts', code: 'EXAM_GRADES', is_active: true },
+      { id: 'cat-grievance', name: 'Sensitive Grievance & Student Welfare', code: 'GRIEVANCE', is_active: true },
     ];
   }
 

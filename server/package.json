@@ -10,7 +10,9 @@
     "start": "node src/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "evaluate:ml": "node src/ml/scripts/evaluate.js"
+    "seed": "node scripts/seed_demo_pack.js",
+    "evaluate:ml": "node src/ml/scripts/evaluate.js",
+    "evaluate:classifier": "node src/ml/scripts/evaluate_ticket_classification.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",

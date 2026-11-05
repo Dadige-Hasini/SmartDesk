@@ -1,0 +1,411 @@
+{
+  "conversations": [
+    {
+      "id": "conv-1793423069071-kc1nx",
+      "student_id": "student-alice-202",
+      "title": "Scholarship Application Query",
+      "is_archived": false,
+      "last_message_at": "2026-10-31T05:04:29.071Z",
+      "created_at": "2026-10-31T05:04:29.071Z",
+      "updated_at": "2026-10-31T05:04:29.071Z"
+    },
+    {
+      "id": "conv-1793423069087-a1ywa",
+      "student_id": "student-alice-202",
+      "title": "When will the merit scholarship resul...",
+      "is_archived": false,
+      "last_message_at": "2026-10-31T05:04:29.109Z",
+      "created_at": "2026-10-31T05:04:29.087Z",
+      "updated_at": "2026-10-31T05:04:29.109Z"
+    },
+    {
+      "id": "conv-1793423083238-7spy6",
+      "student_id": "student-alice-202",
+      "title": "Temp Thread to Delete",
+      "is_archived": true,
+      "last_message_at": "2026-10-31T05:04:43.238Z",
+      "created_at": "2026-10-31T05:04:43.238Z",
+      "updated_at": "2026-10-31T05:04:43.238Z"
+    },
+    {
+      "id": "conv-1793423884134-ykvu0",
+      "student_id": "1a1a6f63-690d-4698-bdbf-d93c6a792c55",
+      "title": "Welcome & Academic Support",
+      "is_archived": false,
+      "last_message_at": "2026-10-31T11:26:56.091Z",
+      "created_at": "2026-10-31T05:18:04.134Z",
+      "updated_at": "2026-10-31T11:26:56.091Z"
+    },
+    {
+      "id": "conv-1793424313608-y2lqu",
+      "student_id": "student-alice-202",
+      "title": "Scholarship Application Query",
+      "is_archived": false,
+      "last_message_at": "2026-10-31T05:25:13.608Z",
+      "created_at": "2026-10-31T05:25:13.608Z",
+      "updated_at": "2026-10-31T05:25:13.608Z"
+    },
+    {
+      "id": "conv-1793424313622-owluy",
+      "student_id": "student-alice-202",
+      "title": "When will the merit scholarship resul...",
+      "is_archived": false,
+      "last_message_at": "2026-10-31T05:25:13.646Z",
+      "created_at": "2026-10-31T05:25:13.622Z",
+      "updated_at": "2026-10-31T05:25:13.646Z"
+    },
+    {
+      "id": "conv-1793424327796-q9k84",
+      "student_id": "student-alice-202",
+      "title": "Temp Thread to Delete",
+      "is_archived": true,
+      "last_message_at": "2026-10-31T05:25:27.796Z",
+      "created_at": "2026-10-31T05:25:27.796Z",
+      "updated_at": "2026-10-31T05:25:27.796Z"
+    },
+    {
+      "id": "conv-1793427503212-vob60",
+      "student_id": "student-alice-202",
+      "title": "Scholarship Application Query",
+      "is_archived": false,
+      "last_message_at": "2026-10-31T06:18:23.212Z",
+      "created_at": "2026-10-31T06:18:23.212Z",
+      "updated_at": "2026-10-31T06:18:23.212Z"
+    },
+    {
+      "id": "conv-1793427503227-1ci3y",
+      "student_id": "student-alice-202",
+      "title": "When will the merit scholarship resul...",
+      "is_archived": false,
+      "last_message_at": "2026-10-31T06:18:23.262Z",
+      "created_at": "2026-10-31T06:18:23.227Z",
+      "updated_at": "2026-10-31T06:18:23.262Z"
+    },
+    {
+      "id": "conv-1793427517409-064rj",
+      "student_id": "student-alice-202",
+      "title": "Temp Thread to Delete",
+      "is_archived": true,
+      "last_message_at": "2026-10-31T06:18:37.409Z",
+      "created_at": "2026-10-31T06:18:37.409Z",
+      "updated_at": "2026-10-31T06:18:37.409Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg-1793423069098-ayqv2",
+      "conversation_id": "conv-1793423069087-a1ywa",
+      "role": "user",
+      "content": "When will the merit scholarship results be published?",
+      "workflow_mode": null,
+      "workflow_label": null,
+      "metadata": {},
+      "created_at": "2026-10-31T05:04:29.098Z"
+    },
+    {
+      "id": "msg-1793423069109-e2t3w",
+      "conversation_id": "conv-1793423069087-a1ywa",
+      "role": "assistant",
+      "content": "Merit scholarship results are released on November 15 according to the academic calendar.",
+      "workflow_mode": "COLLEGE_KNOWLEDGE",
+      "workflow_label": "Verified Policy Answer",
+      "metadata": {},
+      "created_at": "2026-10-31T05:04:29.109Z"
+    },
+    {
+      "id": "msg-1793424313634-u4j9u",
+      "conversation_id": "conv-1793424313622-owluy",
+      "role": "user",
+      "content": "When will the merit scholarship results be published?",
+      "workflow_mode": null,
+      "workflow_label": null,
+      "metadata": {},
+      "created_at": "2026-10-31T05:25:13.634Z"
+    },
+    {
+      "id": "msg-1793424313646-edbrs",
+      "conversation_id": "conv-1793424313622-owluy",
+      "role": "assistant",
+      "content": "Merit scholarship results are released on November 15 according to the academic calendar.",
+      "workflow_mode": "COLLEGE_KNOWLEDGE",
+      "workflow_label": "Verified Policy Answer",
+      "metadata": {},
+      "created_at": "2026-10-31T05:25:13.646Z"
+    },
+    {
+      "id": "msg-1793424476131-tg3dz",
+      "conversation_id": "conv-1793423884134-ykvu0",
+      "role": "user",
+      "content": "What is artificial intelligence and machine learning?",
+      "workflow_mode": null,
+      "workflow_label": null,
+      "metadata": {},
+      "created_at": "2026-10-31T05:27:56.131Z"
+    },
+    {
+      "id": "msg-1793424477979-wm48v",
+      "conversation_id": "conv-1793423884134-ykvu0",
+      "role": "assistant",
+      "content": "**Artificial Intelligence (AI)** refers to the simulation of human intelligence in machines programmed to think, learn, and solve problems like humans.\n\n### Key Branches of AI:\n• **Machine Learning (ML)**: Algorithms that learn from data patterns without explicit rule programming.\n• **Natural Language Processing (NLP)**: Enables computers to understand, interpret, and generate human language.\n• **Computer Vision**: Allows systems to identify and process visual information from photos or video.\n• **Robotics & Automation**: Intelligent autonomous systems performing physical tasks.\n\nAI powers search engines, self-driving vehicles, medical diagnostics, speech assistants, and personalized recommendations.",
+      "workflow_mode": "GENERAL_KNOWLEDGE",
+      "workflow_label": "General Knowledge & Learning",
+      "metadata": {
+        "workflowDescription": "Answered directly by AI Assistant. No staff involvement required.",
+        "citations": [],
+        "ticketDraft": null,
+        "requiresStaffApproval": false,
+        "requiresStaffInformation": false,
+        "suggestedActions": [
+          {
+            "label": "Ask a Follow-up",
+            "action": "CONTINUE_CHAT",
+            "description": "Ask for more details or code examples on this topic"
+          }
+        ],
+        "hasSufficientEvidence": true,
+        "confidenceScore": 0.95
+      },
+      "created_at": "2026-10-31T05:27:57.979Z"
+    },
+    {
+      "id": "msg-1793424504935-timm9",
+      "conversation_id": "conv-1793423884134-ykvu0",
+      "role": "user",
+      "content": "status of my scholarship ticket",
+      "workflow_mode": null,
+      "workflow_label": null,
+      "metadata": {},
+      "created_at": "2026-10-31T05:28:24.935Z"
+    },
+    {
+      "id": "msg-1793424505387-35hsb",
+      "conversation_id": "conv-1793423884134-ykvu0",
+      "role": "assistant",
+      "content": "I found **2** tickets matching \"**scholarship**\" under your account:\n\n1. Ticket **TKT-20261031-0019**: \"Information Request: When will scholarship be issued?\" (Status: **OPEN**, Dept: **Academic Registrar Office**)\n2. Ticket **TKT-20261030-0008**: \"Scholarship not issued\" (Status: **OPEN**, Dept: **Finance & Accounts Office**)\n\nWhich specific ticket would you like more information or status updates on?",
+      "workflow_mode": "PERSONAL_TICKET_INFO",
+      "workflow_label": "Personal Student Records (Multiple Matches)",
+      "metadata": {
+        "workflowDescription": "Multiple tickets matched the queried topic. Student disambiguation requested.",
+        "citations": [],
+        "ticketDraft": null,
+        "requiresStaffApproval": false,
+        "requiresStaffInformation": false,
+        "suggestedActions": [
+          {
+            "label": "Check Ticket TKT-20261031-0019",
+            "action": "INSPECT_TICKET",
+            "description": "Information Request: When will scholarship be issued?"
+          },
+          {
+            "label": "Check Ticket TKT-20261030-0008",
+            "action": "INSPECT_TICKET",
+            "description": "Scholarship not issued"
+          }
+        ],
+        "hasSufficientEvidence": true,
+        "confidenceScore": 1
+      },
+      "created_at": "2026-10-31T05:28:25.387Z"
+    },
+    {
+      "id": "msg-1793427503247-lt8i5",
+      "conversation_id": "conv-1793427503227-1ci3y",
+      "role": "user",
+      "content": "When will the merit scholarship results be published?",
+      "workflow_mode": null,
+      "workflow_label": null,
+      "metadata": {},
+      "created_at": "2026-10-31T06:18:23.247Z"
+    },
+    {
+      "id": "msg-1793427503262-uw2hl",
+      "conversation_id": "conv-1793427503227-1ci3y",
+      "role": "assistant",
+      "content": "Merit scholarship results are released on November 15 according to the academic calendar.",
+      "workflow_mode": "COLLEGE_KNOWLEDGE",
+      "workflow_label": "Verified Policy Answer",
+      "metadata": {},
+      "created_at": "2026-10-31T06:18:23.262Z"
+    },
+    {
+      "id": "msg-1793428783538-v0r3g",
+      "conversation_id": "conv-1793423884134-ykvu0",
+      "role": "user",
+      "content": "what is process of ticket",
+      "workflow_mode": null,
+      "workflow_label": null,
+      "metadata": {},
+      "created_at": "2026-10-31T06:39:43.538Z"
+    },
+    {
+      "id": "msg-1793428788200-1hnp7",
+      "conversation_id": "conv-1793423884134-ykvu0",
+      "role": "assistant",
+      "content": "Based on the approved college regulations and procedures:\n\nUse the official student-services process if available, or raise a Certificate/Records ticket. The current college policy must confirm required documents and processing time.\n\n\nUse the official student-services process if available, or raise a Certificate/Records ticket. The current college policy must confirm required documents and processing time.\n\n\nSign in, choose Create Ticket, select the closest category, describe the issue, add relevant det\n\nPlease refer to the official document citations below for complete terms and guidelines.",
+      "workflow_mode": "COLLEGE_KNOWLEDGE_VERIFIED",
+      "workflow_label": "Verified College Knowledge (Approved Regulations)",
+      "metadata": {
+        "workflowDescription": "Grounded strictly in approved college handbook and policies. No staff approval needed.",
+        "citations": [
+          {
+            "sourceId": "KB-REG-001",
+            "documentId": "KB-REG-001",
+            "documentTitle": "How do I request a bonafide certificate?",
+            "section": "General",
+            "snippet": "Use the official student-services process if available, or raise a Certificate/Records ticket. The current college policy must confirm required documents and pr...",
+            "similarity": 0.397
+          },
+          {
+            "sourceId": "FAQ008",
+            "documentId": "FAQ008",
+            "documentTitle": "How do I request a bonafide certificate?",
+            "section": "FAQ Answer",
+            "snippet": "Use the official student-services process if available, or raise a Certificate/Records ticket. The current college policy must confirm required documents and pr...",
+            "similarity": 0.368
+          },
+          {
+            "sourceId": "FAQ013",
+            "documentId": "FAQ013",
+            "documentTitle": "How do I raise a SmartDesk ticket?",
+            "section": "FAQ Answer",
+            "snippet": "Sign in, choose Create Ticket, select the closest category, describe the issue, add relevant details and optional evidence, review the suggested department, the...",
+            "similarity": 0.363
+          },
+          {
+            "sourceId": "FAQ014",
+            "documentId": "FAQ014",
+            "documentTitle": "How can I check my ticket status?",
+            "section": "FAQ Answer",
+            "snippet": "Open My Tickets and select the ticket to view status, assigned department and public updates. Internal notes are not shown to students....",
+            "similarity": 0.325
+          }
+        ],
+        "ticketDraft": null,
+        "requiresStaffApproval": false,
+        "requiresStaffInformation": false,
+        "suggestedActions": [
+          {
+            "label": "Still need help? Open Ticket",
+            "action": "OPEN_TICKET",
+            "description": "Transfer this inquiry to departmental staff if your case requires special approval."
+          }
+        ],
+        "hasSufficientEvidence": true,
+        "confidenceScore": 0.4
+      },
+      "created_at": "2026-10-31T06:39:48.200Z"
+    },
+    {
+      "id": "msg-1793433997726-de74v",
+      "conversation_id": "conv-1793423884134-ykvu0",
+      "role": "user",
+      "content": "schorlarship ticket status",
+      "workflow_mode": null,
+      "workflow_label": null,
+      "metadata": {},
+      "created_at": "2026-10-31T08:06:37.726Z"
+    },
+    {
+      "id": "msg-1793433999426-psdx6",
+      "conversation_id": "conv-1793423884134-ykvu0",
+      "role": "assistant",
+      "content": "Based on the approved college regulations and procedures:\n\nOpen My Tickets and select the ticket to view status, assigned department and public updates. Internal notes are not shown to students.\n\n\nOpen My Tickets and select the ticket to view status, assigned department and public updates. Internal notes are not shown to students.\n\n\nCheck official exam notices and registration status. Raise an urgent Examinations Cell ticket with exam name, course and semester. Only authorized exam staff can confirm elig\n\nPlease refer to the official document citations below for complete terms and guidelines.",
+      "workflow_mode": "COLLEGE_KNOWLEDGE_VERIFIED",
+      "workflow_label": "Verified College Knowledge (Approved Regulations)",
+      "metadata": {
+        "workflowDescription": "Grounded strictly in approved college handbook and policies. No staff approval needed.",
+        "citations": [
+          {
+            "sourceId": "FAQ014",
+            "documentId": "FAQ014",
+            "documentTitle": "How can I check my ticket status?",
+            "section": "FAQ Answer",
+            "snippet": "Open My Tickets and select the ticket to view status, assigned department and public updates. Internal notes are not shown to students....",
+            "similarity": 0.501
+          },
+          {
+            "sourceId": "KB-SD-002",
+            "documentId": "KB-SD-002",
+            "documentTitle": "How can I check my ticket status?",
+            "section": "General",
+            "snippet": "Open My Tickets and select the ticket to view status, assigned department and public updates. Internal notes are not shown to students....",
+            "similarity": 0.373
+          },
+          {
+            "sourceId": "FAQ004",
+            "documentId": "FAQ004",
+            "documentTitle": "My hall ticket is missing.",
+            "section": "FAQ Answer",
+            "snippet": "Check official exam notices and registration status. Raise an urgent Examinations Cell ticket with exam name, course and semester. Only authorized exam staff ca...",
+            "similarity": 0.332
+          },
+          {
+            "sourceId": "FAQ013",
+            "documentId": "FAQ013",
+            "documentTitle": "How do I raise a SmartDesk ticket?",
+            "section": "FAQ Answer",
+            "snippet": "Sign in, choose Create Ticket, select the closest category, describe the issue, add relevant details and optional evidence, review the suggested department, the...",
+            "similarity": 0.305
+          }
+        ],
+        "ticketDraft": null,
+        "requiresStaffApproval": false,
+        "requiresStaffInformation": false,
+        "suggestedActions": [
+          {
+            "label": "Still need help? Open Ticket",
+            "action": "OPEN_TICKET",
+            "description": "Transfer this inquiry to departmental staff if your case requires special approval."
+          }
+        ],
+        "hasSufficientEvidence": true,
+        "confidenceScore": 0.5
+      },
+      "created_at": "2026-10-31T08:06:39.426Z"
+    },
+    {
+      "id": "msg-1793446011749-daegf",
+      "conversation_id": "conv-1793423884134-ykvu0",
+      "role": "user",
+      "content": "about my memo retreival status",
+      "workflow_mode": null,
+      "workflow_label": null,
+      "metadata": {},
+      "created_at": "2026-10-31T11:26:51.749Z"
+    },
+    {
+      "id": "msg-1793446016091-wc7xs",
+      "conversation_id": "conv-1793423884134-ykvu0",
+      "role": "assistant",
+      "content": "Based on the approved college regulations and procedures:\n\nOpen My Tickets and select the ticket to view status, assigned department and public updates. Internal notes are not shown to students.\n\nPlease refer to the official document citations below for complete terms and guidelines.",
+      "workflow_mode": "COLLEGE_KNOWLEDGE_VERIFIED",
+      "workflow_label": "Verified College Knowledge (Approved Regulations)",
+      "metadata": {
+        "workflowDescription": "Grounded strictly in approved college handbook and policies. No staff approval needed.",
+        "citations": [
+          {
+            "sourceId": "FAQ014",
+            "documentId": "FAQ014",
+            "documentTitle": "How can I check my ticket status?",
+            "section": "FAQ Answer",
+            "snippet": "Open My Tickets and select the ticket to view status, assigned department and public updates. Internal notes are not shown to students....",
+            "similarity": 0.335
+          }
+        ],
+        "ticketDraft": null,
+        "requiresStaffApproval": false,
+        "requiresStaffInformation": false,
+        "suggestedActions": [
+          {
+            "label": "Still need help? Open Ticket",
+            "action": "OPEN_TICKET",
+            "description": "Transfer this inquiry to departmental staff if your case requires special approval."
+          }
+        ],
+        "hasSufficientEvidence": true,
+        "confidenceScore": 0.33
+      },
+      "created_at": "2026-10-31T11:26:56.091Z"
+    }
+  ]
+}

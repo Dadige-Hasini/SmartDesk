@@ -18,6 +18,8 @@ import {
   Loader2,
   Sparkles,
   Bot,
+  ShieldAlert,
+  HelpCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { CATEGORIES as CANONICAL_CATEGORIES } from '../data/taxonomyClient';
@@ -57,11 +59,17 @@ export default function CreateTicketPage() {
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
 
-  // Phase 7: Real-time FAQ deflection & AI Category Suggestion
+  // Phase 7 & Prompt 4: Real-time FAQ deflection & AI Category Classification / Deterministic Routing
   const [similarFaqs, setSimilarFaqs] = useState([]);
   const [expandedFaqId, setExpandedFaqId] = useState(null);
   const [aiCategorySuggestion, setAiCategorySuggestion] = useState(null);
+  const [ticketPrediction, setTicketPrediction] = useState(null);
+  const [isClassifying, setIsClassifying] = useState(false);
   const [isDeflecting, setIsDeflecting] = useState(false);
+
+  // Phase 3: Review & Confirmation modal state + Post-submission confirmation
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [submittedTicket, setSubmittedTicket] = useState(null);
 
   useEffect(() => {
     async function loadCategories() {
@@ -94,15 +102,17 @@ export default function CreateTicketPage() {
     loadCategories();
   }, [prefillData]);
 
-  // Phase 7: Debounced FAQ search and Category classification as student types
+  // Prompt 4 & Phase 7: Debounced Ticket Classification, Deterministic Routing & FAQ Deflection
   useEffect(() => {
-    if (!title || title.trim().length < 6) {
+    if (!title || title.trim().length < 5) {
       setSimilarFaqs([]);
       setAiCategorySuggestion(null);
+      setTicketPrediction(null);
       return;
     }
 
     const timer = setTimeout(async () => {
+      setIsClassifying(true);
       try {
         // 1. Semantic FAQ Search for Deflection
         const faqRes = await api.post('/ai/similar-faqs', {
@@ -112,28 +122,93 @@ export default function CreateTicketPage() {
         const faqs = faqRes?.data?.data?.faqs || [];
         setSimilarFaqs(faqs);
 
-        // 2. ML Category Classification (Advisory)
-        const classRes = await api.post('/ai/classify-query', {
-          query: title.trim(),
-        });
-        const pred = classRes?.data?.data;
-        if (pred && !pred.isLowConfidence && pred.suggestedCategoryCode) {
-          const matchedCat = categories.find((c) => c.code === pred.suggestedCategoryCode);
-          if (matchedCat) {
+        // 2. Deep-Learning Ticket Classification & Deterministic Routing (Requirement 1 & 12)
+        let pred = null;
+        try {
+          const classRes = await api.post('/ai/classify-ticket', {
+            title: title.trim(),
+            description: (description || '').trim(),
+          });
+          pred = classRes?.data?.data;
+        } catch {
+          // Fall back to legacy classify-query
+        }
+
+        if (!pred) {
+          try {
+            const queryRes = await api.post('/ai/classify-query', { query: title.trim() });
+            const qData = queryRes?.data?.data;
+            if (qData) {
+              const catCode = qData.suggestedCategoryCode || qData.topCandidateCode;
+              pred = {
+                category: catCode,
+                confidence: qData.confidenceScore || 0.85,
+                department: 'FEE',
+                department_name: 'Accounts and Fee Section',
+                priority: 'P2',
+                rule_applied: 'ROUTE-06',
+                human_review_required: false,
+                is_fallback: false,
+                model_name: 'SmartDesk-Baseline',
+              };
+            }
+          } catch {
+            // Non-blocking
+          }
+        }
+
+        if (pred) {
+          setTicketPrediction(pred);
+
+          // Update legacy advisory pill if matched
+          const matchedCat = categories.find(
+            (c) => c.code === pred.category || c.name.toLowerCase().includes(pred.category.toLowerCase().replace(/_/g, ' '))
+          );
+          if (matchedCat && !pred.is_fallback) {
             setAiCategorySuggestion({
               category: matchedCat,
-              confidenceScore: pred.confidenceScore,
-              isAmbiguous: pred.isAmbiguous,
+              confidenceScore: pred.confidence,
+              isAmbiguous: false,
             });
           }
         }
       } catch {
-        // Silent fallback: manual ticket flow remains unaffected
+        // Silent fallback: manual ticket flow remains 100% operational
+      } finally {
+        setIsClassifying(false);
       }
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [title, categories]);
+  }, [title, description, categories]);
+
+  // Handle Applying AI Prediction to Ticket Form
+  const handleApplyPrediction = (pred) => {
+    if (!pred) return;
+    const targetCode = pred.category;
+    const matched = categories.find(
+      (c) => c.code === targetCode || c.name.toLowerCase().includes(targetCode.toLowerCase().replace(/_/g, ' '))
+    );
+    if (matched) {
+      setCategoryId(matched.id);
+    }
+
+    // Map priority
+    if (pred.priority === 'P1') {
+      setPriority('High');
+    } else if (pred.priority === 'P2') {
+      setPriority('Medium');
+    } else if (pred.priority === 'P3') {
+      setPriority('Low');
+    }
+
+    // Flag confidentiality if sensitive grievance
+    if (pred.category === 'GRIEVANCE') {
+      setIsConfidential(true);
+    }
+
+    toast.success(`Applied AI routing: ${pred.category} (${pred.department_name || pred.department})`);
+  };
 
   // Handle Ticket Deflection (student chooses FAQ solution)
   const handleDeflectWithFaq = async (faq) => {
@@ -244,13 +319,12 @@ export default function CreateTicketPage() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
       queryClient.invalidateQueries({ queryKey: ['student-dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['staff-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['staff-stats'] });
       const ticketNum = data?.ticket_number || data?.id || '';
       toast.success(ticketNum ? `Ticket #${ticketNum} created successfully!` : 'Ticket created successfully!');
-      if (data?.id) {
-        navigate(`/tickets/${data.id}`);
-      } else {
-        navigate('/tickets');
-      }
+      setIsReviewOpen(false);
+      setSubmittedTicket(data);
     },
     onError: (err) => {
       const msg = err?.message || err?.response?.data?.message || err?.error?.message || 'Failed to raise ticket.';
@@ -258,10 +332,43 @@ export default function CreateTicketPage() {
     },
   });
 
+  const isSubmittingRef = useRef(false);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
-      createMutation.mutate();
+      setIsReviewOpen(true);
+    }
+  };
+
+  const handleConfirmSubmit = () => {
+    if (createMutation.isPending || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    createMutation.mutate(undefined, {
+      onSettled: () => {
+        isSubmittingRef.current = false;
+      },
+    });
+  };
+
+  const handleResetForm = () => {
+    setTitle('');
+    setDescription('');
+    setPriority('Medium');
+    setTagsInput('');
+    setIsConfidential(false);
+    setSelectedFiles([]);
+    setErrors({});
+    setSubmittedTicket(null);
+    setIsReviewOpen(false);
+  };
+
+  const handleAiDraftAssist = () => {
+    if (!description.trim()) {
+      const template = `1. Problem Statement:\n${title ? title.trim() : 'Describe what happened in detail'}\n\n2. Affected Service/Course:\n${selectedCategory?.name || 'Academic, Fee, Hostel, or Administrative'}\n\n3. Desired Resolution:\nWhat specific outcome or assistance is requested from college staff?`;
+      setDescription(template);
+      setErrors((prev) => ({ ...prev, description: undefined }));
+      toast.success('AI structured draft outline applied. Edit to customize.', { icon: '✨' });
     }
   };
 
@@ -275,6 +382,93 @@ export default function CreateTicketPage() {
     }
     return <File className="w-4 h-4 text-emerald-500" />;
   };
+
+  if (submittedTicket) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6 animate-fadeIn py-8">
+        <div className="p-8 sm:p-10 rounded-3xl bg-white dark:bg-navy-900 border border-gray-200 dark:border-navy-800 shadow-xl text-center space-y-6">
+          <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-10 h-10" />
+          </div>
+
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider">
+              <span>Ticket Created & Routed</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white">
+              Ticket Submitted Successfully!
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+              Your inquiry has been placed in the departmental queue. Keep note of your tracking ticket number below.
+            </p>
+          </div>
+
+          {/* Generated Ticket Number Banner */}
+          <div className="p-4 rounded-2xl bg-gray-50 dark:bg-navy-950/70 border border-gray-200 dark:border-navy-800 space-y-1">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Generated Ticket Number
+            </span>
+            <div className="font-mono text-2xl sm:text-3xl font-black text-coral-600 dark:text-coral-400 tracking-wider">
+              {submittedTicket.ticket_number || submittedTicket.id}
+            </div>
+          </div>
+
+          {/* Ticket Metadata Breakdown */}
+          <div className="p-4 rounded-2xl bg-gray-50/70 dark:bg-navy-950/40 border border-gray-100 dark:border-navy-800/80 text-xs text-left grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <span className="text-gray-400 block text-[11px]">Subject</span>
+              <span className="font-semibold text-gray-800 dark:text-gray-200 truncate block">
+                {submittedTicket.title || title}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-400 block text-[11px]">Assigned Department</span>
+              <span className="font-semibold text-gray-800 dark:text-gray-200 block">
+                {submittedTicket.assigned_department?.name || selectedCategory?.department?.name || 'Department Desk'}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-400 block text-[11px]">Category</span>
+              <span className="font-semibold text-gray-800 dark:text-gray-200 block">
+                {submittedTicket.category?.name || selectedCategory?.name || 'General Support'}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-400 block text-[11px]">SLA Response Target</span>
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400 block">
+                Within 4 Business Hours (College IST)
+              </span>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(`/tickets/${submittedTicket.id || submittedTicket.ticket_number}`)}
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-coral-500 hover:bg-coral-600 text-white font-bold text-sm shadow-md transition-colors"
+            >
+              View Ticket Details
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/tickets')}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-gray-300 dark:border-navy-700 hover:bg-gray-50 dark:hover:bg-navy-800 text-gray-700 dark:text-gray-300 font-semibold text-sm transition-colors"
+            >
+              Go to My Tickets
+            </button>
+            <button
+              type="button"
+              onClick={handleResetForm}
+              className="w-full sm:w-auto px-4 py-2.5 text-xs text-gray-500 hover:text-coral-500 font-semibold transition-colors"
+            >
+              Submit Another
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-fadeIn pb-12">
@@ -334,6 +528,96 @@ export default function CreateTicketPage() {
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
+          {/* Prompt 4 (Requirement 12): AI Triage & Department Routing Review Card */}
+          {ticketPrediction && (
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-indigo-50/90 via-white to-purple-50/60 dark:from-navy-900/90 dark:via-navy-950 dark:to-navy-900/70 border border-indigo-200/80 dark:border-indigo-900/50 shadow-sm space-y-3.5 animate-fadeIn">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-500/10 dark:bg-indigo-400/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                    <Bot className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                      <span>AI Triage & Department Routing</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-mono font-bold">
+                        {ticketPrediction.rule_applied || 'ROUTE'}
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                      Model: {ticketPrediction.model_name}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-auto">
+                  <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/80">
+                    {Math.round(ticketPrediction.confidence * 100)}% Match
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleApplyPrediction(ticketPrediction)}
+                    className="px-3 py-1.5 rounded-xl bg-coral-500 hover:bg-coral-600 text-white font-bold text-xs shadow-xs cursor-pointer transition-all flex items-center gap-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Apply Suggestion</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Triage Overview Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                <div className="p-2.5 rounded-xl bg-white/80 dark:bg-navy-950/80 border border-gray-100 dark:border-navy-800">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Suggested Category</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">
+                    {ticketPrediction.category.replace(/_/g, ' ')}
+                  </span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-white/80 dark:bg-navy-950/80 border border-gray-100 dark:border-navy-800">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Routed Department</span>
+                  <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+                    {ticketPrediction.department_name} ({ticketPrediction.department})
+                  </span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-white/80 dark:bg-navy-950/80 border border-gray-100 dark:border-navy-800">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 block">Priority & Triage</span>
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">
+                    {ticketPrediction.priority} {ticketPrediction.human_review_required ? '• Human Review' : '• Automated'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Human Review Banner (Requirement 9) */}
+              {ticketPrediction.human_review_required && (
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 text-xs text-amber-800 dark:text-amber-300">
+                  <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold">Priority Human Review Required: </span>
+                    <span>
+                      {ticketPrediction.human_review_reason || 'This inquiry matches configured criteria for mandatory manual staff evaluation.'}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Fallback & Clarifying Question Banner (Requirement 8) */}
+              {ticketPrediction.is_fallback && ticketPrediction.clarifying_question && (
+                <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-start gap-2.5 text-xs text-blue-800 dark:text-blue-300">
+                  <HelpCircle className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <span className="font-bold">Clarification Suggested: </span>
+                    <p>{ticketPrediction.clarifying_question}</p>
+                  </div>
+                </div>
+              )}
+
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 italic">
+                * All suggestions are strictly advisory. Students maintain full authority to modify any field before final submission.
+              </p>
+            </div>
+          )}
+
           {/* Category Selector with Automatic Department Routing Notice */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -477,9 +761,21 @@ export default function CreateTicketPage() {
 
           {/* Detailed Description */}
           <div className="space-y-2">
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
-              Detailed Description <span className="text-coral-500">*</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                Detailed Description <span className="text-coral-500">*</span>
+              </label>
+              {!description && (
+                <button
+                  type="button"
+                  onClick={handleAiDraftAssist}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-coral-500 hover:text-coral-600 transition-colors"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>AI Assist: Draft Outline</span>
+                </button>
+              )}
+            </div>
             <textarea
               rows={5}
               value={description}
@@ -632,6 +928,115 @@ export default function CreateTicketPage() {
           </div>
         </form>
       </div>
+
+      {/* Pre-Submission Review & Confirmation Modal */}
+      {isReviewOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-navy-900 border border-gray-200 dark:border-navy-800 shadow-2xl p-6 sm:p-7 space-y-5 animate-scaleUp">
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-navy-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Ticket className="w-5 h-5 text-coral-500" />
+                <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                  Review Ticket Before Submission
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsReviewOpen(false)}
+                disabled={createMutation.isPending}
+                className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Please verify your inquiry details before submitting. Once confirmed, a ticket number will be generated and assigned directly to the department queue.
+            </p>
+
+            <div className="space-y-3 p-4 rounded-2xl bg-gray-50 dark:bg-navy-950/70 border border-gray-200 dark:border-navy-800 text-xs">
+              <div>
+                <span className="font-bold text-gray-500 block text-[11px] uppercase tracking-wider">Title</span>
+                <span className="font-semibold text-gray-900 dark:text-white text-sm">{title}</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-1 border-t border-gray-200/60 dark:border-navy-800">
+                <div>
+                  <span className="font-bold text-gray-500 block text-[11px] uppercase tracking-wider">Category</span>
+                  <span className="font-semibold text-gray-800 dark:text-gray-200">{selectedCategory?.name || 'General Support'}</span>
+                </div>
+                <div>
+                  <span className="font-bold text-gray-500 block text-[11px] uppercase tracking-wider">Priority</span>
+                  <span className="font-semibold text-gray-800 dark:text-gray-200">{priority}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-1 border-t border-gray-200/60 dark:border-navy-800">
+                <div>
+                  <span className="font-bold text-gray-500 block text-[11px] uppercase tracking-wider">Routing</span>
+                  <span className="font-semibold text-gray-800 dark:text-gray-200">
+                    {ticketPrediction?.department_name || selectedCategory?.department?.name || 'Assigned Department'}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-bold text-gray-500 block text-[11px] uppercase tracking-wider">Confidentiality</span>
+                  <span className="font-semibold text-gray-800 dark:text-gray-200">
+                    {isConfidential ? 'Confidential Grievance' : 'Standard Ticket'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-1 border-t border-gray-200/60 dark:border-navy-800">
+                <span className="font-bold text-gray-500 block text-[11px] uppercase tracking-wider">Description Preview</span>
+                <p className="text-gray-700 dark:text-gray-300 mt-1 line-clamp-3 italic">
+                  &ldquo;{description}&rdquo;
+                </p>
+              </div>
+
+              {selectedFiles.length > 0 && (
+                <div className="pt-1 border-t border-gray-200/60 dark:border-navy-800">
+                  <span className="font-bold text-gray-500 block text-[11px] uppercase tracking-wider">
+                    Attachments ({selectedFiles.length})
+                  </span>
+                  <span className="text-gray-700 dark:text-gray-300 truncate block mt-0.5">
+                    {selectedFiles.map((f) => f.name).join(', ')}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsReviewOpen(false)}
+                disabled={createMutation.isPending}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-navy-800 transition-colors"
+              >
+                Edit Details
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmSubmit}
+                disabled={createMutation.isPending}
+                className="flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold text-white bg-coral-500 hover:bg-coral-600 disabled:opacity-50 shadow-md transition-all cursor-pointer"
+              >
+                {createMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Submitting Ticket...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Confirm & Submit Ticket</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

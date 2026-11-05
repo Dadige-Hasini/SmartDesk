@@ -1,5 +1,8 @@
 -- ====================================================================
 -- SmartDesk Production Seed Data
+-- Version: 20261030_VALIDATED
+-- Description: Canonical departments, support categories, routing rules,
+--              SLA policies, and baseline published FAQs.
 -- ====================================================================
 
 -- 1. Departments
@@ -54,26 +57,28 @@ VALUES
 ON CONFLICT (category_id, default_department_id) DO NOTHING;
 
 -- 4. SLA Policies
-INSERT INTO public.sla_policies (name, priority, response_time_hours, resolution_time_hours, is_active)
+INSERT INTO public.sla_policies (id, name, priority, response_time_hours, resolution_time_hours, is_active)
 VALUES
-  ('Urgent Emergency Response SLA', 'Urgent', 1, 6, true),
-  ('High Priority Operation SLA', 'High', 4, 24, true),
-  ('Standard Academic Support SLA', 'Medium', 8, 48, true),
-  ('Low Priority Inquiry SLA', 'Low', 24, 72, true)
-ON CONFLICT (priority) DO UPDATE SET
+  ('e1000000-0000-0000-0000-000000000001', 'Urgent Emergency Response SLA', 'Urgent', 1, 6, true),
+  ('e1000000-0000-0000-0000-000000000002', 'High Priority Operation SLA', 'High', 4, 24, true),
+  ('e1000000-0000-0000-0000-000000000003', 'Standard Academic Support SLA', 'Medium', 8, 48, true),
+  ('e1000000-0000-0000-0000-000000000004', 'Low Priority Inquiry SLA', 'Low', 24, 72, true)
+ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
+  priority = EXCLUDED.priority,
   response_time_hours = EXCLUDED.response_time_hours,
   resolution_time_hours = EXCLUDED.resolution_time_hours,
   is_active = EXCLUDED.is_active;
 
 -- 5. Canonical Published FAQs
 INSERT INTO public.faqs (
-  id, question, answer, category_id, department_id, keywords,
+  id, faq_code, question, answer, category_id, department_id, keywords,
   view_count, helpful_count, unhelpful_count, status, visibility, version, is_published
 )
 VALUES
   (
-    'faq-01',
+    'f1000000-0000-0000-0000-000000000001',
+    'FAQ-001',
     'What is the minimum attendance required to appear for semester end examinations?',
     'Under university academic regulations, students must maintain at least 75% aggregate attendance in each registered theory and laboratory course. A condonation of up to 10% may be granted by the Academic Dean solely on medical grounds with verified documentation.',
     'c1000000-0000-0000-0000-000000000001',
@@ -82,7 +87,8 @@ VALUES
     145, 48, 2, 'PUBLISHED', 'PUBLIC', 1, true
   ),
   (
-    'faq-02',
+    'f1000000-0000-0000-0000-000000000002',
+    'FAQ-002',
     'How do I apply for course grade re-evaluation or answer script photocopy?',
     'Submit the online Re-evaluation Application on the Examination Portal within 10 days of results declaration. Fee is INR 500 per theory paper for re-evaluation and INR 300 for digital copy.',
     'c1000000-0000-0000-0000-000000000005',
@@ -91,7 +97,8 @@ VALUES
     89, 32, 1, 'PUBLISHED', 'PUBLIC', 1, true
   ),
   (
-    'faq-03',
+    'f1000000-0000-0000-0000-000000000003',
+    'FAQ-003',
     'What are the payment deadlines and late fine slabs for semester tuition fees?',
     'Tuition fee must be cleared by the 10th of the semester start month. A late fee of INR 100/day applies for the first 14 days, increasing to INR 250/day up to day 30.',
     'c1000000-0000-0000-0000-000000000002',
@@ -100,7 +107,8 @@ VALUES
     210, 65, 3, 'PUBLISHED', 'PUBLIC', 1, true
   ),
   (
-    'faq-04',
+    'f1000000-0000-0000-0000-000000000004',
+    'FAQ-004',
     'How do I register a new laptop MAC address for campus WiFi?',
     'Connect to "Campus-Onboarding" network and visit http://wifi.college.edu to enter your student credentials and device MAC address. Maximum 3 devices permitted per student.',
     'c1000000-0000-0000-0000-000000000006',
@@ -109,7 +117,8 @@ VALUES
     340, 112, 4, 'PUBLISHED', 'PUBLIC', 1, true
   ),
   (
-    'faq-05',
+    'f1000000-0000-0000-0000-000000000005',
+    'FAQ-005',
     'What is the procedure to get an Internship No Objection Certificate (NOC)?',
     'Submit company offer letter, duration details, and job role to the Department Placement Faculty Coordinator. Approved NOC is issued within 3 working days.',
     'c1000000-0000-0000-0000-000000000009',
@@ -118,7 +127,8 @@ VALUES
     167, 54, 1, 'PUBLISHED', 'PUBLIC', 1, true
   ),
   (
-    'faq-06',
+    'f1000000-0000-0000-0000-000000000006',
+    'FAQ-006',
     'How can students report ragging, harassment, or severe personal grievances?',
     'Contact the 24/7 Anti-Ragging Helpline at 1800-180-5522 or email antiragging@college.edu. Complaints can also be submitted confidentially on SmartDesk.',
     'c1000000-0000-0000-0000-000000000010',
@@ -127,6 +137,7 @@ VALUES
     95, 39, 0, 'PUBLISHED', 'PUBLIC', 1, true
   )
 ON CONFLICT (id) DO UPDATE SET
+  faq_code = EXCLUDED.faq_code,
   question = EXCLUDED.question,
   answer = EXCLUDED.answer,
   status = EXCLUDED.status,

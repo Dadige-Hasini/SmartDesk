@@ -1,0 +1,146 @@
+[
+  {
+    "rule_id": "ROUTE-01",
+    "category": "IT_ACCESS",
+    "department": "IT",
+    "priority": "P2",
+    "confidence_threshold": 0.7,
+    "fallback_department": "STU",
+    "human_review": false
+  },
+  {
+    "rule_id": "ROUTE-02",
+    "category": "NETWORK_WIFI",
+    "department": "IT",
+    "priority": "P2",
+    "confidence_threshold": 0.7,
+    "fallback_department": "STU",
+    "human_review": false
+  },
+  {
+    "rule_id": "ROUTE-03",
+    "category": "LMS_TECHNICAL",
+    "department": "IT",
+    "priority": "P2",
+    "confidence_threshold": 0.7,
+    "fallback_department": "STU",
+    "human_review": false
+  },
+  {
+    "rule_id": "ROUTE-04",
+    "category": "EXAM_HALL_TICKET",
+    "department": "EXAM",
+    "priority": "P1",
+    "confidence_threshold": 0.7,
+    "fallback_department": "STU",
+    "human_review": true
+  },
+  {
+    "rule_id": "ROUTE-05",
+    "category": "EXAM_RESULTS",
+    "department": "EXAM",
+    "priority": "P2",
+    "confidence_threshold": 0.7,
+    "fallback_department": "STU",
+    "human_review": false
+  },
+  {
+    "rule_id": "ROUTE-06",
+    "category": "FEE_PAYMENT",
+    "department": "FEE",
+    "priority": "P1",
+    "confidence_threshold": 0.7,
+    "fallback_department": "STU",
+    "human_review": true
+  },
+  {
+    "rule_id": "ROUTE-07",
+    "category": "SCHOLARSHIP",
+    "department": "FEE",
+    "priority": "P2",
+    "confidence_threshold": 0.7,
+    "fallback_department": "STU",
+    "human_review": false
+  },
+  {
+    "rule_id": "ROUTE-08",
+    "category": "ATTENDANCE",
+    "department": "ATT",
+    "priority": "P2",
+    "confidence_threshold": 0.7,
+    "fallback_department": "STU",
+    "human_review": false
+  },
+  {
+    "rule_id": "ROUTE-09",
+    "category": "CERTIFICATE_RECORDS",
+    "department": "REG",
+    "priority": "P3",
+    "confidence_threshold": 0.7,
+    "fallback_department": "STU",
+    "human_review": false
+  },
+  {
+    "rule_id": "ROUTE-10",
+    "category": "LIBRARY",
+    "department": "LIB",
+    "priority": "P3",
+    "confidence_threshold": 0.7,
+    "fallback_department": "STU",
+    "human_review": false
+  },
+  {
+    "rule_id": "ROUTE-11",
+    "category": "HOSTEL_MAINTENANCE",
+    "department": "HOSTEL",
+    "priority": "P2",
+    "confidence_threshold": 0.7,
+    "fallback_department": "STU",
+    "human_review": false
+  },
+  {
+    "rule_id": "ROUTE-12",
+    "category": "CAMPUS_FACILITIES",
+    "department": "FAC",
+    "priority": "P3",
+    "confidence_threshold": 0.7,
+    "fallback_department": "STU",
+    "human_review": false
+  },
+  {
+    "rule_id": "ROUTE-13",
+    "category": "TRANSPORT",
+    "department": "TRAN",
+    "priority": "P2",
+    "confidence_threshold": 0.7,
+    "fallback_department": "STU",
+    "human_review": false
+  },
+  {
+    "rule_id": "ROUTE-14",
+    "category": "GRIEVANCE",
+    "department": "STU",
+    "priority": "P1",
+    "confidence_threshold": 0.8,
+    "fallback_department": "STU",
+    "human_review": true
+  },
+  {
+    "rule_id": "ROUTE-15",
+    "category": "ADMISSIONS",
+    "department": "ADMISSIONS",
+    "priority": "P3",
+    "confidence_threshold": 0.7,
+    "fallback_department": "STU",
+    "human_review": false
+  },
+  {
+    "rule_id": "ROUTE-16",
+    "category": "OTHER",
+    "department": "STU",
+    "priority": "P3",
+    "confidence_threshold": 0.7,
+    "fallback_department": "STU",
+    "human_review": true
+  }
+]

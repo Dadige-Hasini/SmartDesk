@@ -14,7 +14,8 @@
     "test:client": "npm --prefix client test",
     "install:all": "npm install && npm --prefix server install && npm --prefix client install",
     "seed": "node scripts/seed-runner.js",
-    "evaluate:ml": "npm --prefix server run evaluate:ml"
+    "evaluate:ml": "npm --prefix server run evaluate:ml",
+    "evaluate:classifier": "npm --prefix server run evaluate:classifier"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

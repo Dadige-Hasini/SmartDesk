@@ -1,0 +1,282 @@
+[
+  {
+    "document_id": "KB-IT-001",
+    "title": "I forgot my portal password. What should I do?",
+    "content": "Use the official Forgot Password flow and follow verification instructions. If it fails, raise an IT ticket. Never share your password or OTP.",
+    "category": "IT_ACCESS",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "KB-IT-002",
+    "title": "Campus Wi-Fi is not connecting. What information should I provide?",
+    "content": "Try the official network instructions. If the issue continues, report the building/floor, device type, approximate time and error. Never include your password.",
+    "category": "NETWORK_WIFI",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "KB-IT-003",
+    "title": "My assignment upload failed.",
+    "content": "Check the LMS file requirements and connection. Keep a screenshot and report the course, assignment, time and error to IT. If a deadline is near, mention it.",
+    "category": "LMS_TECHNICAL",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "KB-EXAM-001",
+    "title": "My hall ticket is missing.",
+    "content": "Check official exam notices and registration status. Raise an urgent Examinations Cell ticket with exam name, course and semester. Only authorized exam staff can confirm eligibility.",
+    "category": "EXAM_HALL_TICKET",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "KB-EXAM-002",
+    "title": "My result or marks look incorrect.",
+    "content": "Check the official notice for review/revaluation deadlines. Raise an Examinations Cell ticket with subject code and exam session. Do not assume a review outcome.",
+    "category": "EXAM_RESULTS",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "KB-FEE-001",
+    "title": "Money was deducted but fees show unpaid.",
+    "content": "Do not immediately pay again. Save date, amount and transaction reference, then contact Accounts through a secure ticket. Never send PINs, passwords or OTPs.",
+    "category": "FEE_PAYMENT",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "KB-ATT-001",
+    "title": "My attendance is incorrect.",
+    "content": "Report the course code, class date and relevant evidence to the Academic Coordinator. AI cannot edit attendance; authorized staff must verify records.",
+    "category": "ATTENDANCE",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "KB-REG-001",
+    "title": "How do I request a bonafide certificate?",
+    "content": "Use the official student-services process if available, or raise a Certificate/Records ticket. The current college policy must confirm required documents and processing time.",
+    "category": "CERTIFICATE_RECORDS",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "KB-LIB-001",
+    "title": "My digital library access is not working.",
+    "content": "Check your current student login and service availability. Raise a Library ticket with the service name and error; do not share your password.",
+    "category": "LIBRARY",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "KB-HOSTEL-001",
+    "title": "How do I report a hostel maintenance issue?",
+    "content": "Create a Hostel Maintenance ticket with block, floor and issue description. For immediate danger, contact campus security/emergency support directly too.",
+    "category": "HOSTEL_MAINTENANCE",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "KB-TRAN-001",
+    "title": "How do I report a bus timing issue?",
+    "content": "Raise a Transport ticket with route/bus identifier, stop, date and approximate time. Use the latest official notice for schedules; AI must not invent timings.",
+    "category": "TRANSPORT",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "KB-STU-001",
+    "title": "Can I submit a confidential grievance?",
+    "content": "Use the official confidential grievance flow. Access should be limited to authorized reviewers. Avoid sharing sensitive details in general chat; immediate danger requires urgent human/emergency help.",
+    "category": "GRIEVANCE",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "KB-SD-001",
+    "title": "How do I raise a SmartDesk ticket?",
+    "content": "Sign in, choose Create Ticket, select the closest category, describe the issue, add relevant details and optional evidence, review the suggested department, then confirm submission. Save the ticket ID.",
+    "category": "OTHER",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "KB-SD-002",
+    "title": "How can I check my ticket status?",
+    "content": "Open My Tickets and select the ticket to view status, assigned department and public updates. Internal notes are not shown to students.",
+    "category": "OTHER",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "KB-SD-003",
+    "title": "What do ticket statuses mean?",
+    "content": "OPEN is awaiting handling; IN_PROGRESS means staff are working; AWAITING_INFO means more details are needed; RESOLVED means a solution was recorded; CLOSED means completed; REJECTED means declined with a reason.",
+    "category": "OTHER",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "KB-SD-004",
+    "title": "What is an SLA?",
+    "content": "An SLA is a target for first response and resolution based on priority, not a guarantee. SmartDesk should display the deadline calculated from the active policy and escalate at-risk tickets.",
+    "category": "OTHER",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "KB-SD-005",
+    "title": "Can AI create or assign tickets?",
+    "content": "AI can draft a ticket and suggest category/department. Show the summary and obtain student confirmation before submission. Backend rules validate and record the actual action.",
+    "category": "OTHER",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "KB-SD-006",
+    "title": "Can AI change my attendance, fees or exam results?",
+    "content": "No. AI can explain procedures, but official records and ticket decisions require authorized staff or approved backend workflows.",
+    "category": "OTHER",
+    "visibility": "STUDENT",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "POL-001",
+    "title": "AI grounding",
+    "content": "Answer from approved, current, role-authorized sources. Cite source IDs. If evidence is missing or conflicting, say it cannot be verified and offer human help.",
+    "category": "POLICY",
+    "visibility": "INTERNAL_POLICY",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "POL-002",
+    "title": "Ticket confirmation",
+    "content": "AI may draft a ticket but must show category, department, priority and description and ask for confirmation before submission.",
+    "category": "POLICY",
+    "visibility": "INTERNAL_POLICY",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "POL-003",
+    "title": "Routing",
+    "content": "Use deterministic category-to-department rules. Model predictions are suggestions only. Low-confidence or sensitive cases require human review.",
+    "category": "POLICY",
+    "visibility": "INTERNAL_POLICY",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "POL-004",
+    "title": "Authorization",
+    "content": "Backend validates identity, current role, account status, ownership and department authorization. AI predictions never grant permissions.",
+    "category": "POLICY",
+    "visibility": "INTERNAL_POLICY",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "POL-005",
+    "title": "Audit",
+    "content": "Record actor, action, entity, timestamp, correlation ID and minimal metadata for privileged changes. Never log passwords, tokens or OTPs.",
+    "category": "POLICY",
+    "visibility": "INTERNAL_POLICY",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "POL-006",
+    "title": "Privacy",
+    "content": "Internal notes are never returned to students. Confidential grievances are restricted to authorized reviewers.",
+    "category": "POLICY",
+    "visibility": "INTERNAL_POLICY",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "POL-007",
+    "title": "SLA",
+    "content": "Demo targets are calendar-hour examples only. Production must define working hours, holidays, pause rules and escalation owners.",
+    "category": "POLICY",
+    "visibility": "INTERNAL_POLICY",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "POL-008",
+    "title": "Official records",
+    "content": "AI must not modify attendance, fee status, marks, eligibility or close tickets outside the approved backend workflow.",
+    "category": "POLICY",
+    "visibility": "INTERNAL_POLICY",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "POL-009",
+    "title": "Files",
+    "content": "Use private storage, validate file type/signature, enforce size/count limits and authorize every download.",
+    "category": "POLICY",
+    "visibility": "INTERNAL_POLICY",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  },
+  {
+    "document_id": "POL-010",
+    "title": "Reopening",
+    "content": "Demo rule: student may request reopening once within seven calendar days after RESOLVED; backend validates and logs request.",
+    "category": "POLICY",
+    "visibility": "INTERNAL_POLICY",
+    "approval_status": "APPROVED_DEMO",
+    "version": "1.0",
+    "embedding_status": "PENDING_GENERATION"
+  }
+]

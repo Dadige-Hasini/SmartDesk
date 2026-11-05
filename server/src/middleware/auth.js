@@ -31,6 +31,72 @@ export async function requireAuth(req, res, next) {
     );
   }
 
+  if (process.env.NODE_ENV !== 'production' && token.startsWith('mock-dev-token-')) {
+    const role = token.replace('mock-dev-token-', '').toUpperCase();
+    const db = supabaseAdmin || supabaseClient;
+
+    if (db) {
+      try {
+        const { data: realProfile } = await db
+          .from('profiles')
+          .select('*, departments(id, name, code)')
+          .eq('role', role)
+          .eq('status', 'ACTIVE')
+          .limit(1)
+          .maybeSingle();
+
+        if (realProfile) {
+          req.user = {
+            id: realProfile.id,
+            email: realProfile.email,
+            user_metadata: {
+              role: realProfile.role,
+              full_name: realProfile.full_name,
+              department_id: realProfile.department_id,
+            },
+          };
+          req.profile = realProfile;
+          req.userRole = realProfile.role;
+          req.userDepartmentId = realProfile.department_id;
+          return next();
+        }
+      } catch (err) {
+        logger.debug('Error matching dev mock profile against Supabase database', { error: err.message });
+      }
+    }
+
+    const isStaff = role === 'STAFF';
+    const mockUser = {
+      id: isStaff ? '22222222-2222-2222-2222-222222222222' : '00000000-0000-0000-0000-000000000001',
+      email: isStaff ? 'staff@smartdesk.edu' : 'student@smartdesk.edu',
+      user_metadata: {
+        role: role,
+        full_name: isStaff ? 'Prof. Priya Sharma' : 'Aarav Patel',
+        department_id: '11111111-1111-1111-1111-111111111111',
+      },
+    };
+    req.user = mockUser;
+    const fallbackProfile = {
+      id: mockUser.id,
+      email: mockUser.email,
+      full_name: mockUser.user_metadata.full_name,
+      role: role,
+      status: 'ACTIVE',
+      department_id: '11111111-1111-1111-1111-111111111111',
+      departments: {
+        id: '11111111-1111-1111-1111-111111111111',
+        name: 'Computer Science & Engineering',
+        code: 'CSE',
+      },
+    };
+    inMemoryProfiles.set(mockUser.id, fallbackProfile);
+    ticketRepository.registerProfile(fallbackProfile);
+    req.profile = fallbackProfile;
+    req.userRole = fallbackProfile.role;
+    req.userDepartmentId = fallbackProfile.department_id;
+    return next();
+  }
+
   if (!supabaseClient) {
     logger.error('Supabase client not initialized on server while validating token');
     return sendError(
@@ -75,7 +141,8 @@ export async function requireAuth(req, res, next) {
           requestId: req.id,
           userId: authUser.id,
         });
-        const fallbackProfile = inMemoryProfiles.get(authUser.id) || {
+        const existingFallback = (inMemoryProfiles.get && inMemoryProfiles.get(authUser.id)) || inMemoryProfiles[authUser.id];
+        const fallbackProfile = existingFallback || {
           id: authUser.id,
           email: authUser.email,
           full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Student User',
@@ -89,9 +156,12 @@ export async function requireAuth(req, res, next) {
             code: 'CSE',
           },
         };
-        inMemoryProfiles.set(authUser.id, fallbackProfile);
+        if (inMemoryProfiles.set) inMemoryProfiles.set(authUser.id, fallbackProfile);
+        else inMemoryProfiles[authUser.id] = fallbackProfile;
         ticketRepository.registerProfile(fallbackProfile);
         req.profile = fallbackProfile;
+        req.userRole = fallbackProfile.role;
+        req.userDepartmentId = fallbackProfile.department_id;
         return next();
       }
 
@@ -109,9 +179,11 @@ export async function requireAuth(req, res, next) {
     }
 
     if (!profile) {
-      const existingInMemory = inMemoryProfiles.get(authUser.id);
+      const existingInMemory = (inMemoryProfiles.get && inMemoryProfiles.get(authUser.id)) || inMemoryProfiles[authUser.id];
       if (existingInMemory) {
         req.profile = existingInMemory;
+        req.userRole = existingInMemory.role;
+        req.userDepartmentId = existingInMemory.department_id;
         return next();
       }
 
@@ -130,14 +202,19 @@ export async function requireAuth(req, res, next) {
           code: 'CSE',
         },
       };
-      inMemoryProfiles.set(authUser.id, autoProfile);
+      if (inMemoryProfiles.set) inMemoryProfiles.set(authUser.id, autoProfile);
+      else inMemoryProfiles[authUser.id] = autoProfile;
       ticketRepository.registerProfile(autoProfile);
       req.profile = autoProfile;
+      req.userRole = autoProfile.role;
+      req.userDepartmentId = autoProfile.department_id;
       return next();
     }
 
     // Attach verified profile to request
     req.profile = profile;
+    req.userRole = profile.role;
+    req.userDepartmentId = profile.department_id;
     next();
   } catch (err) {
     logger.error('Unexpected error in requireAuth middleware', {

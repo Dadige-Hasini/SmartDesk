@@ -191,6 +191,21 @@ export default function AdminDashboardPage() {
     },
   });
 
+  const updateStaffDepartmentMutation = useMutation({
+    mutationFn: async ({ staffId, departmentId }) => {
+      return await api.patch(`/admin/staff/${staffId}/department`, { departmentId });
+    },
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Staff department assigned successfully');
+      queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['staff-stats'] });
+    },
+    onError: (err) => {
+      toast.error(err.message || 'Failed to assign department');
+    },
+  });
+
   const createDeptMutation = useMutation({
     mutationFn: async (payload) => {
       return await api.post('/admin/departments', payload);
@@ -281,22 +296,22 @@ export default function AdminDashboardPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fadeIn">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-gradient-to-r from-navy-950 via-navy-900 to-navy-800 text-white shadow-xl border border-navy-700/60">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-3xl bg-gradient-to-r from-slate-100 via-white to-amber-50/50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-800 text-slate-900 dark:text-white shadow-md dark:shadow-xl border border-slate-200 dark:border-navy-700/60 transition-colors duration-200">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-coral-500/20 border border-coral-500/40 flex items-center justify-center text-coral-400 shadow-inner">
+          <div className="w-14 h-14 rounded-2xl bg-coral-500/10 dark:bg-coral-500/20 border border-coral-500/20 dark:border-coral-500/40 flex items-center justify-center text-coral-600 dark:text-coral-400 shadow-inner">
             <ShieldCheck className="w-8 h-8" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-coral-400 bg-coral-500/10 px-2.5 py-0.5 rounded-full border border-coral-500/30">
+              <span className="text-xs font-bold uppercase tracking-wider text-coral-600 dark:text-coral-400 bg-coral-500/10 px-2.5 py-0.5 rounded-full border border-coral-500/20 dark:border-coral-500/30">
                 Super Admin Console
               </span>
-              <span className="text-xs text-gray-400">Governance & Institutional Metrics</span>
+              <span className="text-xs text-slate-500 dark:text-gray-400">Governance & Institutional Metrics</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1 text-slate-900 dark:text-white">
               University Operations Center
             </h1>
-            <p className="text-sm text-gray-300 mt-0.5">
+            <p className="text-sm text-slate-600 dark:text-gray-300 mt-0.5">
               Control staff approvals, departmental SLAs, routing rules, announcements, and university-wide triage health.
             </p>
           </div>
@@ -623,9 +638,25 @@ export default function AdminDashboardPage() {
                           <span className="text-xs text-gray-400 block">{s.email}</span>
                         </td>
                         <td className="py-4 px-4">
-                          <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-navy-100 dark:bg-navy-800 text-gray-800 dark:text-gray-200">
-                            {s.department?.name || 'Unassigned'}
-                          </span>
+                          <select
+                            value={s.department_id || s.department?.id || ''}
+                            onChange={(e) =>
+                              updateStaffDepartmentMutation.mutate({
+                                staffId: s.id,
+                                departmentId: e.target.value || null,
+                              })
+                            }
+                            disabled={updateStaffDepartmentMutation.isPending}
+                            className="px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-navy-700 bg-white dark:bg-navy-800 text-xs font-semibold text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-coral-500 max-w-[220px]"
+                            title="Assign or change staff department"
+                          >
+                            <option value="">-- Unassigned --</option>
+                            {departments?.map((dept) => (
+                              <option key={dept.id} value={dept.id}>
+                                {dept.name} ({dept.code})
+                              </option>
+                            ))}
+                          </select>
                         </td>
                         <td className="py-4 px-3">
                           <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold border ${STAFF_STATUS_BADGES[s.status] || ''}`}>

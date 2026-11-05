@@ -32,11 +32,22 @@ router.get('/status', AiController.getStatus);
 
 // Authenticated AI Chat & Ticket Assistance
 router.post('/chat', requireAuth, aiRateLimiter, AiController.chat);
+router.get('/history', requireAuth, AiController.getChatHistory);
+router.delete('/history', requireAuth, AiController.clearChatHistory);
+router.get('/conversations', requireAuth, AiController.listConversations);
+router.post('/conversations', requireAuth, AiController.createConversation);
+router.get('/conversations/:id/messages', requireAuth, AiController.getConversationMessages);
+router.delete('/conversations/:id', requireAuth, AiController.deleteConversation);
 router.post('/suggest-ticket', requireAuth, aiRateLimiter, AiController.suggestTicket);
 router.post('/feedback', requireAuth, AiController.recordFeedback);
 
-// Phase 7: ML Query Classification & Advisory Routing Suggestions
+// Prompt 6: Verified Student-Facing AI Workflow Backend Tools
+router.get('/tools', requireAuth, AiController.getTools);
+router.post('/tool-call', requireAuth, aiRateLimiter, AiController.executeToolCall);
+
+// Phase 7 & Prompt 4: ML Ticket Classification & Deterministic Department Routing
 router.post('/classify-query', requireAuth, AiController.classifyQuery);
+router.post('/classify-ticket', requireAuth, AiController.classifyTicket);
 
 // Phase 7: Semantic Search for FAQs & Ticket Deflection
 router.post('/similar-faqs', requireAuth, AiController.getSimilarFaqs);

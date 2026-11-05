@@ -5,7 +5,9 @@ import { supabaseAdmin, supabaseClient } from '../config/supabase.js';
 import { embeddingService } from './ai/embedding.service.js';
 import { getCategoryByCode } from '../ml/taxonomy.js';
 import { inMemoryTickets } from '../repositories/ticket.repository.js';
+import { auditService, AUDIT_ACTIONS } from './audit.service.js';
 import { logger } from '../utils/logger.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -414,8 +416,26 @@ export class FaqService {
       }
     }
 
+    // Record centralized append-only audit event for knowledge approval
+    await auditService.recordAuditEvent({
+      actor: adminProfile.email || adminProfile.full_name,
+      actorId: adminProfile.id,
+      role: adminProfile.role,
+      action: AUDIT_ACTIONS.KNOWLEDGE_APPROVED,
+      entity: 'knowledge_document',
+      entityId: faq.id,
+      metadata: {
+        faqId: faq.id,
+        question: faq.question.slice(0, 100),
+        categoryId: faq.category_id,
+        departmentId: faq.department_id,
+        approvedAt: faq.approved_at,
+      },
+    }).catch(() => {});
+
     return faq;
   }
+
 
   /**
    * Edit FAQ content and update embedding

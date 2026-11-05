@@ -1,0 +1,85 @@
+[
+  {
+    "event_id": "AUD-001",
+    "actor": "student_demo_01",
+    "role": "STUDENT",
+    "action": "TICKET_CREATED",
+    "entity": "SD-DEMO-1001",
+    "timestamp": "2026-10-20T04:10:00Z",
+    "metadata": {
+      "category": "FEE_PAYMENT",
+      "priority": "P1"
+    }
+  },
+  {
+    "event_id": "AUD-002",
+    "actor": "system_router",
+    "role": "SYSTEM",
+    "action": "TICKET_ROUTED",
+    "entity": "SD-DEMO-1001",
+    "timestamp": "2026-10-20T04:10:02Z",
+    "metadata": {
+      "department": "FEE",
+      "confidence": 0.96,
+      "human_review": true
+    }
+  },
+  {
+    "event_id": "AUD-003",
+    "actor": "staff_demo_fee_01",
+    "role": "STAFF",
+    "action": "STATUS_CHANGED",
+    "entity": "SD-DEMO-1001",
+    "timestamp": "2026-10-20T04:35:00Z",
+    "metadata": {
+      "from": "OPEN",
+      "to": "IN_PROGRESS"
+    }
+  },
+  {
+    "event_id": "AUD-004",
+    "actor": "system_sla",
+    "role": "SYSTEM",
+    "action": "SLA_WARNING_SENT",
+    "entity": "SD-DEMO-1002",
+    "timestamp": "2026-10-20T05:00:00Z",
+    "metadata": {
+      "priority": "P1"
+    }
+  },
+  {
+    "event_id": "AUD-005",
+    "actor": "system_ai",
+    "role": "SYSTEM",
+    "action": "AI_SUGGESTION_GENERATED",
+    "entity": "SD-DEMO-1005",
+    "timestamp": "2026-10-20T06:30:00Z",
+    "metadata": {
+      "category": "GRIEVANCE",
+      "confidence": 0.84,
+      "human_review": true
+    }
+  },
+  {
+    "event_id": "AUD-006",
+    "actor": "staff_demo_it_02",
+    "role": "STAFF",
+    "action": "TICKET_ASSIGNED",
+    "entity": "SD-DEMO-1004",
+    "timestamp": "2026-10-20T06:15:00Z",
+    "metadata": {
+      "department": "IT"
+    }
+  },
+  {
+    "event_id": "AUD-007",
+    "actor": "staff_demo_it_01",
+    "role": "STAFF",
+    "action": "TICKET_RESOLVED",
+    "entity": "SD-DEMO-1007",
+    "timestamp": "2026-10-20T08:30:00Z",
+    "metadata": {
+      "resolution_code": "LMS_RETRY_GUIDANCE"
+    }
+  }
+]

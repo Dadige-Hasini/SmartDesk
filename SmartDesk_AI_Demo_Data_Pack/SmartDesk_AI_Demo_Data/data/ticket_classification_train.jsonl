@@ -1,0 +1,43 @@
+{"text": "I cannot log into the college portal", "label": "IT_ACCESS", "split": "train_demo"}
+{"text": "My student account is locked", "label": "IT_ACCESS", "split": "train_demo"}
+{"text": "Forgot my college password", "label": "IT_ACCESS", "split": "train_demo"}
+{"text": "Password reset link did not arrive", "label": "IT_ACCESS", "split": "train_demo"}
+{"text": "Campus wifi is not connecting", "label": "NETWORK_WIFI", "split": "train_demo"}
+{"text": "Internet is slow in the lab", "label": "NETWORK_WIFI", "split": "train_demo"}
+{"text": "Wi-Fi keeps disconnecting in the library", "label": "NETWORK_WIFI", "split": "train_demo"}
+{"text": "I cannot upload my assignment on LMS", "label": "LMS_TECHNICAL", "split": "train_demo"}
+{"text": "The course page gives an error", "label": "LMS_TECHNICAL", "split": "train_demo"}
+{"text": "Online assignment submission failed", "label": "LMS_TECHNICAL", "split": "train_demo"}
+{"text": "My hall ticket has not been generated", "label": "EXAM_HALL_TICKET", "split": "train_demo"}
+{"text": "I cannot download my exam ticket", "label": "EXAM_HALL_TICKET", "split": "train_demo"}
+{"text": "Hall ticket details are incorrect", "label": "EXAM_HALL_TICKET", "split": "train_demo"}
+{"text": "My semester result is not visible", "label": "EXAM_RESULTS", "split": "train_demo"}
+{"text": "My marks look incorrect", "label": "EXAM_RESULTS", "split": "train_demo"}
+{"text": "How do I request revaluation", "label": "EXAM_RESULTS", "split": "train_demo"}
+{"text": "Money was deducted but fees show unpaid", "label": "FEE_PAYMENT", "split": "train_demo"}
+{"text": "I need a fee payment receipt", "label": "FEE_PAYMENT", "split": "train_demo"}
+{"text": "I was charged twice for tuition", "label": "FEE_PAYMENT", "split": "train_demo"}
+{"text": "What is my scholarship status", "label": "SCHOLARSHIP", "split": "train_demo"}
+{"text": "I need help with reimbursement documents", "label": "SCHOLARSHIP", "split": "train_demo"}
+{"text": "My attendance is marked absent incorrectly", "label": "ATTENDANCE", "split": "train_demo"}
+{"text": "Attendance percentage has not updated", "label": "ATTENDANCE", "split": "train_demo"}
+{"text": "A present class is showing absent", "label": "ATTENDANCE", "split": "train_demo"}
+{"text": "I need a bonafide certificate", "label": "CERTIFICATE_RECORDS", "split": "train_demo"}
+{"text": "How can I get my transcript", "label": "CERTIFICATE_RECORDS", "split": "train_demo"}
+{"text": "My name is wrong in student records", "label": "CERTIFICATE_RECORDS", "split": "train_demo"}
+{"text": "My library card is not working", "label": "LIBRARY", "split": "train_demo"}
+{"text": "I cannot access the digital library", "label": "LIBRARY", "split": "train_demo"}
+{"text": "There is water leakage in my hostel room", "label": "HOSTEL_MAINTENANCE", "split": "train_demo"}
+{"text": "Hostel room power is not working", "label": "HOSTEL_MAINTENANCE", "split": "train_demo"}
+{"text": "Classroom projector is broken", "label": "CAMPUS_FACILITIES", "split": "train_demo"}
+{"text": "The fan in my classroom does not work", "label": "CAMPUS_FACILITIES", "split": "train_demo"}
+{"text": "College bus did not arrive at my stop", "label": "TRANSPORT", "split": "train_demo"}
+{"text": "I need a bus pass", "label": "TRANSPORT", "split": "train_demo"}
+{"text": "Bus pickup time is incorrect", "label": "TRANSPORT", "split": "train_demo"}
+{"text": "I want to submit a confidential complaint", "label": "GRIEVANCE", "split": "train_demo"}
+{"text": "I need to report a student welfare concern", "label": "GRIEVANCE", "split": "train_demo"}
+{"text": "I want to check admission application status", "label": "ADMISSIONS", "split": "train_demo"}
+{"text": "What documents are needed for enrollment", "label": "ADMISSIONS", "split": "train_demo"}
+{"text": "How do I raise a ticket", "label": "OTHER", "split": "train_demo"}
+{"text": "How can I track my request", "label": "OTHER", "split": "train_demo"}
+{"text": "What does in progress mean", "label": "OTHER", "split": "train_demo"}

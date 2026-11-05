@@ -24,9 +24,26 @@ export class StaffController {
   async getDepartmentMembers(req, res, next) {
     try {
       const isSuperAdmin = req.profile.role === 'SUPER_ADMIN';
-      const deptId = isSuperAdmin && req.query.departmentId ? req.query.departmentId : req.profile.department_id;
+      let deptId = null;
+      if (req.query.all === 'true' || req.query.all === true || req.query.departmentId === 'all') {
+        deptId = null;
+      } else if (req.query.departmentId) {
+        deptId = req.query.departmentId;
+      } else if (!isSuperAdmin) {
+        deptId = req.profile.department_id;
+      }
+
       const staffList = await adminService.listStaff({ departmentId: deptId, status: 'ACTIVE' });
       return sendSuccess(res, 'Department staff members retrieved successfully', staffList);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getDepartments(req, res, next) {
+    try {
+      const departments = await adminService.listDepartments(false);
+      return sendSuccess(res, 'Active departments retrieved successfully', departments);
     } catch (err) {
       next(err);
     }

@@ -2,11 +2,12 @@ import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import { supabaseClient, supabaseAdmin } from '../config/supabase.js';
+import { profileUpdateLimiter } from '../middleware/rateLimiter.js';
 
 const router = Router();
 
 // Standard default departments for fallback when database table is pending migration
-const DEFAULT_DEPARTMENTS = [
+export const DEFAULT_DEPARTMENTS = [
   { id: '11111111-1111-1111-1111-111111111111', name: 'Computer Science & Engineering', code: 'CSE' },
   { id: '22222222-2222-2222-2222-222222222222', name: 'Electronics & Communication', code: 'ECE' },
   { id: '33333333-3333-3333-3333-333333333333', name: 'Hostel & Student Housing', code: 'HOSTEL' },
@@ -40,7 +41,7 @@ router.get('/me', requireAuth, (req, res) => {
  * @desc    Update current user's profile details
  * @access  Private
  */
-router.patch('/profile', requireAuth, async (req, res, next) => {
+router.patch('/profile', requireAuth, profileUpdateLimiter, async (req, res, next) => {
   try {
     const { fullName, phoneNumber, yearOfStudy, designation } = req.body;
     const db = supabaseAdmin || supabaseClient;

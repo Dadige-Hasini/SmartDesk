@@ -4,8 +4,12 @@ import { logger } from '../../../utils/logger.js';
 export class OpenAiProvider extends ILlmProvider {
   constructor(config = {}) {
     super();
-    this.apiKey = config.apiKey || process.env.AI_API_KEY || '';
-    this.model = config.model || process.env.AI_MODEL_CHAT || 'gpt-4o-mini';
+    this.apiKey = (config.apiKey || process.env.LLM_API_KEY || process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '').trim();
+    let model = (config.model || process.env.LLM_MODEL || process.env.AI_MODEL_CHAT || 'gpt-4o-mini').trim();
+    if (!model || model.startsWith('sk-')) {
+      model = 'gpt-4o-mini';
+    }
+    this.model = model;
     this.baseUrl = config.baseUrl || 'https://api.openai.com/v1';
     this.timeoutMs = config.timeoutMs || 25000;
   }
@@ -16,7 +20,7 @@ export class OpenAiProvider extends ILlmProvider {
       valid: hasKey,
       provider: 'openai',
       model: this.model,
-      error: hasKey ? null : 'Missing valid AI_API_KEY for OpenAI provider.',
+      error: hasKey ? null : 'Missing valid LLM_API_KEY for OpenAI provider.',
     };
   }
 

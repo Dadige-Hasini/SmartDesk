@@ -1,0 +1,113 @@
+[
+  {
+    "demo_id": "SD-DEMO-1001",
+    "student_ref": "student_demo_01",
+    "title": "Fee deducted but portal says unpaid",
+    "category": "FEE_PAYMENT",
+    "department": "FEE",
+    "priority": "P1",
+    "status": "IN_PROGRESS",
+    "confidence": 0.96,
+    "human_review": true
+  },
+  {
+    "demo_id": "SD-DEMO-1002",
+    "student_ref": "student_demo_02",
+    "title": "Hall ticket missing before examination",
+    "category": "EXAM_HALL_TICKET",
+    "department": "EXAM",
+    "priority": "P1",
+    "status": "OPEN",
+    "confidence": 0.91,
+    "human_review": true
+  },
+  {
+    "demo_id": "SD-DEMO-1003",
+    "student_ref": "student_demo_03",
+    "title": "Attendance marked absent incorrectly",
+    "category": "ATTENDANCE",
+    "department": "ATT",
+    "priority": "P2",
+    "status": "AWAITING_INFO",
+    "confidence": 0.89,
+    "human_review": false
+  },
+  {
+    "demo_id": "SD-DEMO-1004",
+    "student_ref": "student_demo_04",
+    "title": "Campus Wi-Fi disconnects in library",
+    "category": "NETWORK_WIFI",
+    "department": "IT",
+    "priority": "P2",
+    "status": "IN_PROGRESS",
+    "confidence": 0.93,
+    "human_review": false
+  },
+  {
+    "demo_id": "SD-DEMO-1005",
+    "student_ref": "student_demo_05",
+    "title": "Confidential student grievance",
+    "category": "GRIEVANCE",
+    "department": "STU",
+    "priority": "P1",
+    "status": "OPEN",
+    "visibility": "RESTRICTED",
+    "confidence": 0.84,
+    "human_review": true
+  },
+  {
+    "demo_id": "SD-DEMO-1006",
+    "student_ref": "student_demo_06",
+    "title": "Request for bonafide certificate",
+    "category": "CERTIFICATE_RECORDS",
+    "department": "REG",
+    "priority": "P3",
+    "status": "OPEN",
+    "confidence": 0.88,
+    "human_review": false
+  },
+  {
+    "demo_id": "SD-DEMO-1007",
+    "student_ref": "student_demo_07",
+    "title": "Assignment upload error in LMS",
+    "category": "LMS_TECHNICAL",
+    "department": "IT",
+    "priority": "P2",
+    "status": "RESOLVED",
+    "confidence": 0.94,
+    "human_review": false
+  },
+  {
+    "demo_id": "SD-DEMO-1008",
+    "student_ref": "student_demo_08",
+    "title": "Hostel water leakage",
+    "category": "HOSTEL_MAINTENANCE",
+    "department": "HOSTEL",
+    "priority": "P2",
+    "status": "OPEN",
+    "confidence": 0.95,
+    "human_review": false
+  },
+  {
+    "demo_id": "SD-DEMO-1009",
+    "student_ref": "student_demo_09",
+    "title": "Digital library access issue",
+    "category": "LIBRARY",
+    "department": "LIB",
+    "priority": "P3",
+    "status": "CLOSED",
+    "confidence": 0.9,
+    "human_review": false
+  },
+  {
+    "demo_id": "SD-DEMO-1010",
+    "student_ref": "student_demo_10",
+    "title": "Bus pickup time complaint",
+    "category": "TRANSPORT",
+    "department": "TRAN",
+    "priority": "P2",
+    "status": "OPEN",
+    "confidence": 0.87,
+    "human_review": false
+  }
+]

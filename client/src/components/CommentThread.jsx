@@ -16,6 +16,8 @@ import {
   Clock,
   Loader2,
   AlertCircle,
+  MessageSquare,
+  Sparkles,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatToIST } from '../utils/date';
@@ -39,13 +41,25 @@ export default function CommentThread({ ticketId, isClosed = false }) {
 
   // Load comments
   const loadComments = async () => {
+    if (!ticketId) return;
     try {
+      setLoading(true);
+      const res = await api.get(`/tickets/${ticketId}/comments`);
       const payload = res?.data?.data || res?.data || res;
-      if (payload?.comments) {
-        setComments(payload.comments);
+      if (payload?.comments && Array.isArray(payload.comments)) {
+        const raw = payload.comments;
+        setComments(role === 'STUDENT' ? raw.filter((c) => !c.is_internal) : raw);
+      } else if (Array.isArray(payload)) {
+        setComments(role === 'STUDENT' ? payload.filter((c) => !c.is_internal) : payload);
+      } else {
+        setComments([]);
       }
     } catch (err) {
-      toast.error('Failed to load discussion comments');
+      console.warn('Comments fetch warning/fallback:', err?.message || err);
+      // Only toast if an explicit error with status occurs
+      if (err?.response && err.response.status !== 404) {
+        toast.error('Failed to load discussion comments');
+      }
     } finally {
       setLoading(false);
     }
@@ -56,7 +70,7 @@ export default function CommentThread({ ticketId, isClosed = false }) {
 
     // Supabase Realtime subscription
     let channel = null;
-    if (supabase && ticketId) {
+    if (supabase && typeof supabase.channel === 'function' && ticketId) {
       try {
         channel = supabase
           .channel(`public:ticket_comments:ticket_id=eq.${ticketId}`)
@@ -81,16 +95,40 @@ export default function CommentThread({ ticketId, isClosed = false }) {
               }
             }
           )
-          .subscribe();
+          .subscribe((status) => {
+            if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+              loadComments();
+            }
+          });
       } catch {}
+    }
+
+    // Fallback synchronization on focus, network reconnection, and polling
+    const handleFocus = () => loadComments();
+    const handleOnline = () => loadComments();
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('online', handleOnline);
+
+    let intervalId = null;
+    if (!isClosed && typeof window !== 'undefined' && process.env.NODE_ENV !== 'test') {
+      intervalId = setInterval(() => {
+        loadComments();
+      }, 12000);
+      if (typeof intervalId?.unref === 'function') intervalId.unref();
     }
 
     return () => {
       if (channel) {
-        supabase.removeChannel(channel);
+        try {
+          supabase.removeChannel(channel);
+        } catch {}
       }
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('online', handleOnline);
+      if (intervalId) clearInterval(intervalId);
     };
-  }, [ticketId, role]);
+  }, [ticketId, role, isClosed]);
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files || []);
@@ -143,6 +181,8 @@ export default function CommentThread({ ticketId, isClosed = false }) {
       const payload = res?.data?.data || res?.data || res;
       if (payload?.comment) {
         setComments((prev) => [...prev, payload.comment]);
+      } else {
+        await loadComments();
       }
 
       setContent('');
@@ -179,37 +219,51 @@ export default function CommentThread({ ticketId, isClosed = false }) {
   };
 
   const renderFileIcon = (mimeType) => {
-    if (mimeType?.startsWith('image/')) return <ImageIcon className="w-4 h-4 text-sky-500" />;
-    if (mimeType?.includes('pdf')) return <FileText className="w-4 h-4 text-rose-500" />;
-    return <File className="w-4 h-4 text-emerald-500" />;
+    if (mimeType?.startsWith('image/')) return <ImageIcon className="w-4 h-4 text-sky-400" />;
+    if (mimeType?.includes('pdf')) return <FileText className="w-4 h-4 text-rose-400" />;
+    return <File className="w-4 h-4 text-emerald-400" />;
   };
 
   return (
-    <div className="bg-white dark:bg-navy-900 rounded-2xl border border-gray-200 dark:border-navy-800 overflow-hidden shadow-sm">
+    <div className="bg-neutral-900/70 backdrop-blur-xl rounded-3xl border border-white/10 overflow-hidden shadow-2xl transition-all">
       {/* Thread Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-navy-800 bg-gray-50/60 dark:bg-navy-950/40">
-        <h3 className="font-bold text-gray-900 dark:text-white text-base flex items-center gap-2">
-          Discussion & Notes
-          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-navy-800 text-gray-700 dark:text-gray-300 font-semibold">
-            {comments.length}
-          </span>
-        </h3>
+      <div className="flex items-center justify-between px-6 py-4.5 border-b border-white/10 bg-white/[0.02]">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#64CEFB]">
+            <MessageSquare className="w-4.5 h-4.5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-white text-base flex items-center gap-2">
+              Discussion & Notes
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/10 text-white/90 border border-white/10 font-semibold">
+                {comments.length}
+              </span>
+            </h3>
+            <p className="text-xs text-white/60">Official thread between student and assigned department</p>
+          </div>
+        </div>
+
         {isStaffOrAdmin && (
-          <span className="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
+          <span className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full font-medium flex items-center gap-1.5 shadow-sm">
             <Lock className="w-3.5 h-3.5" /> Staff Internal Notes Enabled
           </span>
         )}
       </div>
 
       {/* Comment List */}
-      <div className="p-6 space-y-4 max-h-[500px] overflow-y-auto">
+      <div className="p-6 space-y-4 max-h-[540px] overflow-y-auto">
         {loading ? (
-          <div className="py-12 flex justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-coral-500" />
+          <div className="py-14 flex flex-col items-center justify-center gap-3 text-white/60">
+            <Loader2 className="w-6 h-6 animate-spin text-[#64CEFB]" />
+            <span className="text-xs">Loading ticket discussion...</span>
           </div>
         ) : comments.length === 0 ? (
-          <div className="py-10 text-center text-gray-400 dark:text-gray-500 text-sm">
-            <p>No comments on this ticket yet. Start the conversation below.</p>
+          <div className="py-12 text-center text-white/50 text-sm space-y-2">
+            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-white/40">
+              <MessageSquare className="w-6 h-6" />
+            </div>
+            <p className="font-medium text-white/70">No comments on this ticket yet.</p>
+            <p className="text-xs text-white/40">Start the conversation below or ask for an update.</p>
           </div>
         ) : (
           comments.map((comment) => {
@@ -219,43 +273,45 @@ export default function CommentThread({ ticketId, isClosed = false }) {
             return (
               <div
                 key={comment.id}
-                className={`p-4 rounded-2xl transition-all ${
+                className={`p-5 rounded-2xl transition-all duration-200 ${
                   isNote
-                    ? 'bg-amber-500/10 border-2 border-amber-500/30'
-                    : 'bg-gray-50 dark:bg-navy-950/70 border border-gray-200/80 dark:border-navy-800'
+                    ? 'bg-amber-500/10 border-2 border-amber-500/30 shadow-lg shadow-amber-500/5'
+                    : 'bg-white/[0.03] hover:bg-white/[0.05] border border-white/10 hover:border-white/20'
                 }`}
               >
                 {/* Comment Metadata */}
-                <div className="flex items-center justify-between gap-2 mb-2.5">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-navy-800 text-white flex items-center justify-center text-xs font-bold uppercase">
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-black to-neutral-800 border border-white/20 text-white flex items-center justify-center text-xs font-bold uppercase shadow-sm">
                       {comment.author?.full_name?.[0] || 'U'}
                     </div>
                     <div>
-                      <span className="text-xs font-bold text-gray-900 dark:text-white mr-2">
-                        {comment.author?.full_name || 'User'}
-                      </span>
-                      <span
-                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${
-                          authorRole === 'SUPER_ADMIN'
-                            ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
-                            : authorRole === 'STAFF'
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                            : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                        }`}
-                      >
-                        {authorRole}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-white">
+                          {comment.author?.full_name || 'User'}
+                        </span>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                            authorRole === 'SUPER_ADMIN'
+                              ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                              : authorRole === 'STAFF'
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                              : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                          }`}
+                        >
+                          {authorRole}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5">
                     {isNote && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-md">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/30 px-2.5 py-0.5 rounded-full">
                         <Lock className="w-3 h-3" /> Internal Staff Note
                       </span>
                     )}
-                    <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                    <span className="text-[11px] text-white/50 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {formatToIST(comment.created_at)}
                     </span>
@@ -263,26 +319,26 @@ export default function CommentThread({ ticketId, isClosed = false }) {
                 </div>
 
                 {/* Comment Body */}
-                <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">
+                <p className="text-sm text-white/90 whitespace-pre-wrap leading-relaxed">
                   {comment.content}
                 </p>
 
                 {/* Attached Files */}
                 {comment.attachments && comment.attachments.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-200/50 dark:border-navy-800/80 flex flex-wrap gap-2">
+                  <div className="mt-3 pt-3 border-t border-white/10 flex flex-wrap gap-2">
                     {comment.attachments.map((att) => (
                       <button
                         key={att.id}
                         type="button"
                         onClick={() => handleDownloadAttachment(att)}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-navy-900 border border-gray-200 dark:border-navy-800 hover:border-coral-500 text-xs text-gray-700 dark:text-gray-300 transition-colors shadow-sm"
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/50 border border-white/15 hover:border-[#64CEFB] text-xs text-white/80 hover:text-white transition-all shadow-sm group"
                       >
                         {renderFileIcon(att.mime_type)}
-                        <span className="max-w-[140px] truncate">{att.file_name}</span>
-                        <span className="text-[10px] text-gray-400">
+                        <span className="max-w-[150px] truncate">{att.file_name}</span>
+                        <span className="text-[10px] text-white/40">
                           ({(att.file_size / 1024).toFixed(0)} KB)
                         </span>
-                        <Download className="w-3.5 h-3.5 text-gray-400 hover:text-coral-500" />
+                        <Download className="w-3.5 h-3.5 text-white/40 group-hover:text-[#64CEFB] transition-colors" />
                       </button>
                     ))}
                   </div>
@@ -295,27 +351,27 @@ export default function CommentThread({ ticketId, isClosed = false }) {
 
       {/* Post Comment Box */}
       {!isClosed ? (
-        <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200 dark:border-navy-800 bg-gray-50/50 dark:bg-navy-950/60">
+        <form id="comment-composer" onSubmit={handleSubmit} className="p-5 border-t border-white/10 bg-black/40 space-y-3">
           {/* Internal Note Toggle (Staff Only) */}
           {isStaffOrAdmin && (
-            <div className="flex items-center gap-4 mb-3">
-              <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 text-xs font-semibold text-white/80 cursor-pointer">
                 <input
                   type="radio"
                   name="visibility"
                   checked={!isInternal}
                   onChange={() => setIsInternal(false)}
-                  className="text-coral-500 focus:ring-coral-400"
+                  className="text-[#64CEFB] focus:ring-[#64CEFB]"
                 />
                 <span>Public Response (Visible to Student)</span>
               </label>
-              <label className="flex items-center gap-2 text-xs font-semibold text-amber-600 dark:text-amber-400 cursor-pointer">
+              <label className="flex items-center gap-2 text-xs font-semibold text-amber-300 cursor-pointer">
                 <input
                   type="radio"
                   name="visibility"
                   checked={isInternal}
                   onChange={() => setIsInternal(true)}
-                  className="text-amber-500 focus:ring-amber-400"
+                  className="text-amber-400 focus:ring-amber-400"
                 />
                 <span className="flex items-center gap-1">
                   <Lock className="w-3.5 h-3.5" /> Staff Internal Note
@@ -326,6 +382,7 @@ export default function CommentThread({ ticketId, isClosed = false }) {
 
           {/* Text Area */}
           <textarea
+            id="comment-textarea"
             rows="3"
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -334,27 +391,27 @@ export default function CommentThread({ ticketId, isClosed = false }) {
                 ? 'Write a private note for department staff...'
                 : 'Type your message or response...'
             }
-            className={`w-full p-3 text-sm rounded-xl border ${
+            className={`w-full p-4 text-sm rounded-2xl border ${
               isInternal
-                ? 'border-amber-500/50 focus:border-amber-500 focus:ring-amber-400 bg-amber-50/20 dark:bg-amber-950/20'
-                : 'border-gray-200 dark:border-navy-800 focus:border-coral-500 focus:ring-coral-400 bg-white dark:bg-navy-900'
-            } text-gray-900 dark:text-white placeholder-gray-400 outline-none transition-all resize-none`}
+                ? 'border-amber-500/40 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 bg-amber-950/20'
+                : 'border-white/10 focus:border-[#64CEFB] focus:ring-1 focus:ring-[#64CEFB] bg-white/[0.04]'
+            } text-white placeholder-white/40 outline-none transition-all resize-none`}
           />
 
           {/* Selected File Previews */}
           {selectedFiles.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div className="flex flex-wrap gap-2">
               {selectedFiles.map((file, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-200 dark:bg-navy-800 text-xs text-gray-800 dark:text-gray-200"
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs text-white"
                 >
-                  <Paperclip className="w-3 h-3 text-coral-500" />
-                  <span className="max-w-[120px] truncate">{file.name}</span>
+                  <Paperclip className="w-3 h-3 text-[#64CEFB]" />
+                  <span className="max-w-[130px] truncate">{file.name}</span>
                   <button
                     type="button"
                     onClick={() => removeFile(idx)}
-                    className="p-0.5 hover:text-red-500 rounded"
+                    className="p-0.5 hover:text-red-400 rounded transition-colors"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -364,7 +421,7 @@ export default function CommentThread({ ticketId, isClosed = false }) {
           )}
 
           {/* Action Row */}
-          <div className="flex items-center justify-between mt-3 pt-2">
+          <div className="flex items-center justify-between pt-1">
             <div>
               <input
                 ref={fileInputRef}
@@ -377,9 +434,9 @@ export default function CommentThread({ ticketId, isClosed = false }) {
               />
               <label
                 htmlFor="file-upload"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-navy-800 cursor-pointer transition-colors"
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-medium text-white/70 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 cursor-pointer transition-colors"
               >
-                <Paperclip className="w-3.5 h-3.5 text-coral-500" />
+                <Paperclip className="w-3.5 h-3.5 text-[#64CEFB]" />
                 <span>Attach Files (Max 3, 5MB)</span>
               </label>
             </div>
@@ -387,10 +444,10 @@ export default function CommentThread({ ticketId, isClosed = false }) {
             <button
               type="submit"
               disabled={submitting}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md transition-all ${
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-semibold text-white shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 ${
                 isInternal
-                  ? 'bg-amber-600 hover:bg-amber-700'
-                  : 'bg-coral-500 hover:bg-coral-600'
+                  ? 'bg-amber-600 hover:bg-amber-500 border border-amber-400/40'
+                  : 'bg-black hover:bg-neutral-900 border border-white/20 hover:border-[#64CEFB]/60'
               } disabled:opacity-50`}
             >
               {submitting ? (
@@ -403,7 +460,7 @@ export default function CommentThread({ ticketId, isClosed = false }) {
           </div>
         </form>
       ) : (
-        <div className="p-4 bg-gray-100 dark:bg-navy-950 text-center text-xs text-gray-500 dark:text-gray-400">
+        <div className="p-4 bg-white/[0.02] border-t border-white/10 text-center text-xs text-white/50">
           This ticket is closed. Reopen the ticket to continue the discussion.
         </div>
       )}

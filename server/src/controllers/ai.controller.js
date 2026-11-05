@@ -2,11 +2,16 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { ragService, inMemoryAiFeedback } from '../services/ai/rag.service.js';
+import { aiWorkflowToolsService, TOOL_DEFINITIONS } from '../services/ai/ai_workflow_tools.service.js';
 import { llmService } from '../services/ai/llm.service.js';
 import { classifierService } from '../ml/classifier.js';
+import { ticketClassificationService } from '../ml/ticket_classification/ticket_classification_service.js';
 import { semanticSearchService } from '../services/ai/semantic_search.service.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import { logger } from '../utils/logger.js';
+import { ticketService } from '../services/ticket.service.js';
+import { supabaseAdmin, supabaseClient } from '../config/supabase.js';
+import { aiConversationService } from '../services/ai/ai_conversation.service.js';
 
 export class AiController {
   /**
@@ -18,12 +23,78 @@ export class AiController {
   }
 
   /**
+   * Staff Ticket Summarization & Response Suggestion
+   * POST /api/ai/summarize-ticket
+   */
+  static async summarizeTicket(req, res, next) {
+    try {
+      const { ticketId } = req.body;
+      if (!ticketId) {
+        return sendError(res, 'ticketId is required for summarization.', { code: 'INVALID_TICKET_ID' }, 400);
+      }
+
+      const ticket = await ticketService.getTicket(ticketId, req.profile || req.user);
+      if (!ticket) {
+        return sendError(res, 'Ticket not found.', { code: 'NOT_FOUND' }, 404);
+      }
+
+      const isStaffOrAdmin = ['STAFF', 'SUPER_ADMIN'].includes(req.profile?.role || req.user?.role);
+      if (!isStaffOrAdmin) {
+        return sendError(res, 'Unauthorized to request staff ticket summary.', { code: 'FORBIDDEN' }, 403);
+      }
+
+      // Generate advisory summary and response recommendation
+      const title = ticket.title || 'Inquiry';
+      const desc = ticket.description || '';
+      const category = ticket.category?.name || 'General';
+      const status = ticket.status || 'OPEN';
+      const studentName = ticket.creator?.full_name || 'the student';
+
+      let summary = null;
+      try {
+        const aiSummary = await ragService.summarizeTicket({
+          ticketId,
+          userProfile: req.profile || req.user,
+        });
+        if (aiSummary?.summary) {
+          summary = aiSummary.summary;
+        }
+      } catch (err) {
+        logger.debug('[AiController.summarizeTicket] LLM summary fallback to template', { error: err.message });
+      }
+
+      if (!summary) {
+        summary = `Student ${studentName} reported: "${title}". Issue categorised under ${category} (Priority: ${ticket.priority || 'Medium'}). Currently in status ${status}. Details: ${desc.slice(0, 250)}...`;
+      }
+
+      const suggestedReply = `Dear ${studentName},\n\nThank you for reaching out to the ${ticket.assigned_department?.name || 'Department'} support team regarding "${title}".\n\nWe have reviewed your request and are actively processing it. To help us resolve this swiftly, please ensure any relevant registration or reference documents are on file. We will notify you as soon as this is updated.\n\nBest regards,\n${req.profile?.full_name || 'Department Support Officer'}\n${ticket.assigned_department?.name || 'College Help Desk'}`;
+
+      const keyPoints = [
+        `Category: ${category}`,
+        `Current Status: ${status}`,
+        `Target SLA: ${ticket.sla_due_at ? new Date(ticket.sla_due_at).toLocaleDateString() : 'Standard 24h'}`,
+        `Student Contact: ${ticket.creator?.email || 'Registered University Email'}`,
+      ];
+
+      return sendSuccess(res, 'AI ticket summary and response suggestion generated', {
+        summary,
+        suggestedReply,
+        keyPoints,
+        disclaimer: 'Advisory AI assistance only; staff remain responsible for official actions.',
+      });
+    } catch (err) {
+      logger.error('[AiController.summarizeTicket] Error generating summary', { error: err.message });
+      next(err);
+    }
+  }
+
+  /**
    * Grounded conversational Q&A endpoint
    * POST /api/ai/chat
    */
   static async chat(req, res, next) {
     try {
-      const { query, conversationHistory = [] } = req.body;
+      let { query, conversationHistory = [], conversationId } = req.body;
 
       if (!query || typeof query !== 'string' || query.trim().length === 0) {
         return sendError(res, 'Query string is required and cannot be empty.', { code: 'INVALID_QUERY' }, 400);
@@ -33,15 +104,219 @@ export class AiController {
         return sendError(res, 'Query exceeds maximum limit of 1000 characters.', { code: 'QUERY_TOO_LONG' }, 400);
       }
 
+      const userId = req.profile?.id || req.user?.id;
+
+      // Ensure active conversation thread exists
+      if (!conversationId && userId) {
+        try {
+          const existing = await aiConversationService.listConversations(userId);
+          if (existing.length > 0) {
+            conversationId = existing[0].id;
+          } else {
+            const newConv = await aiConversationService.createConversation(userId, {
+              title: query.trim().length > 35 ? query.trim().substring(0, 32) + '...' : query.trim(),
+            });
+            conversationId = newConv.id;
+          }
+        } catch {}
+      }
+
+      // Persist user turn
+      if (conversationId) {
+        await aiConversationService.addMessage(conversationId, {
+          role: 'user',
+          content: query.trim(),
+        }).catch(() => {});
+      }
+
       const result = await ragService.generateGroundedAnswer({
         query: query.trim(),
         conversationHistory: Array.isArray(conversationHistory) ? conversationHistory : [],
         userProfile: req.profile || req.user,
       });
 
+      // Persist assistant turn
+      if (conversationId) {
+        await aiConversationService.addMessage(conversationId, {
+          role: 'assistant',
+          content: result.answer,
+          workflowMode: result.workflowMode,
+          workflowLabel: result.workflowLabel,
+          metadata: {
+            workflowDescription: result.workflowDescription,
+            citations: result.citations || [],
+            ticketDraft: result.ticketDraft || null,
+            requiresStaffApproval: Boolean(result.requiresStaffApproval),
+            requiresStaffInformation: Boolean(result.requiresStaffInformation),
+            suggestedActions: result.suggestedActions || [],
+            hasSufficientEvidence: result.hasSufficientEvidence,
+            confidenceScore: result.confidenceScore,
+          },
+        }).catch(() => {});
+        result.conversationId = conversationId;
+      }
+
+      // Persist student interaction into Supabase PostgreSQL public.ai_interactions table
+      const db = supabaseAdmin || supabaseClient;
+      if (db && userId) {
+        try {
+          await db.from('ai_interactions').insert({
+            user_id: userId,
+            query: query.trim(),
+            response: result.answer,
+            model: 'gpt-4o-mini',
+            confidence_score: result.confidenceScore ?? 0.95,
+            metadata: {
+              workflowMode: result.workflowMode,
+              workflowLabel: result.workflowLabel,
+              citations: result.citations || [],
+              ticketDraft: result.ticketDraft || null,
+              requiresStaffApproval: Boolean(result.requiresStaffApproval),
+              requiresStaffInformation: Boolean(result.requiresStaffInformation),
+            },
+          });
+        } catch (dbErr) {
+          logger.warn('[AiController.chat] Failed to record ai_interaction in database', { error: dbErr.message });
+        }
+      }
+
       return sendSuccess(res, 'AI response generated successfully', result);
     } catch (err) {
       logger.error('[AiController.chat] Failed to generate AI response', { error: err.message });
+      next(err);
+    }
+  }
+
+  /**
+   * List all conversation threads for student
+   * GET /api/ai/conversations
+   */
+  static async listConversations(req, res, next) {
+    try {
+      const studentId = req.profile?.id || req.user?.id;
+      const list = await aiConversationService.listConversations(studentId);
+      return sendSuccess(res, 'Conversations retrieved successfully', list);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Create a new conversation thread
+   * POST /api/ai/conversations
+   */
+  static async createConversation(req, res, next) {
+    try {
+      const studentId = req.profile?.id || req.user?.id;
+      const { title } = req.body || {};
+      const conv = await aiConversationService.createConversation(studentId, { title });
+      return sendSuccess(res, 'Conversation created successfully', conv, 201);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Retrieve messages for a specific conversation
+   * GET /api/ai/conversations/:id/messages
+   */
+  static async getConversationMessages(req, res, next) {
+    try {
+      const { id } = req.params;
+      const messages = await aiConversationService.getMessages(id);
+      return sendSuccess(res, 'Messages retrieved successfully', messages);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Archive/delete a conversation
+   * DELETE /api/ai/conversations/:id
+   */
+  static async deleteConversation(req, res, next) {
+    try {
+      const { id } = req.params;
+      const studentId = req.profile?.id || req.user?.id;
+      await aiConversationService.deleteConversation(id, studentId);
+      return sendSuccess(res, 'Conversation archived successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Load previous chat history for authenticated student
+   * GET /api/ai/history
+   */
+  static async getChatHistory(req, res, next) {
+    try {
+      const userId = req.profile?.id || req.user?.id;
+      if (!userId) {
+        return sendSuccess(res, 'Chat history retrieved', []);
+      }
+
+      const db = supabaseAdmin || supabaseClient;
+      if (!db) {
+        return sendSuccess(res, 'Chat history retrieved (offline)', []);
+      }
+
+      const { data, error } = await db
+        .from('ai_interactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: true })
+        .limit(50);
+
+      if (error) {
+        logger.warn('[AiController.getChatHistory] Database error', { error: error.message });
+        return sendSuccess(res, 'Chat history retrieved', []);
+      }
+
+      const formatted = (data || []).flatMap((row) => [
+        {
+          id: `hist-user-${row.id}`,
+          role: 'user',
+          content: row.query,
+          timestamp: row.created_at,
+        },
+        {
+          id: `hist-ai-${row.id}`,
+          role: 'assistant',
+          content: row.response,
+          workflowMode: row.metadata?.workflowMode,
+          workflowLabel: row.metadata?.workflowLabel,
+          citations: row.metadata?.citations || [],
+          ticketDraft: row.metadata?.ticketDraft || null,
+          requiresStaffApproval: row.metadata?.requiresStaffApproval || false,
+          requiresStaffInformation: row.metadata?.requiresStaffInformation || false,
+          hasSufficientEvidence: true,
+          confidenceScore: row.confidence_score || 0.95,
+          timestamp: row.created_at,
+        },
+      ]);
+
+      return sendSuccess(res, 'Chat history retrieved successfully', formatted);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Clear chat history for authenticated student
+   * DELETE /api/ai/history
+   */
+  static async clearChatHistory(req, res, next) {
+    try {
+      const userId = req.profile?.id || req.user?.id;
+      if (userId) {
+        const db = supabaseAdmin || supabaseClient;
+        if (db) {
+          await db.from('ai_interactions').delete().eq('user_id', userId);
+        }
+      }
+      return sendSuccess(res, 'Conversation history cleared successfully');
+    } catch (err) {
       next(err);
     }
   }
@@ -280,6 +555,33 @@ export class AiController {
   }
 
   /**
+   * Predict Category & Deterministic Department Routing from Ticket Title and Description
+   * POST /api/ai/classify-ticket
+   */
+  static async classifyTicket(req, res, next) {
+    try {
+      const { title, description } = req.body;
+
+      if (!title || typeof title !== 'string' || title.trim().length === 0) {
+        return sendError(res, 'Ticket title is required for classification.', { code: 'INVALID_TITLE' }, 400);
+      }
+
+      const outcome = await ticketClassificationService.classifyAndRoute(
+        { title: title.trim(), description: (description || '').trim() },
+        {
+          userProfile: req.profile || req.user,
+          sessionId: req.headers['x-session-id'] || null,
+        }
+      );
+
+      return sendSuccess(res, 'Ticket classified and routed successfully', outcome);
+    } catch (err) {
+      logger.error('[AiController.classifyTicket] Error classifying ticket', { error: err.message });
+      next(err);
+    }
+  }
+
+  /**
    * Search Similar FAQs for Ticket Deflection
    * POST /api/ai/similar-faqs
    */
@@ -401,6 +703,57 @@ export class AiController {
       return sendSuccess(res, 'AI & ML Analytics retrieved successfully', analytics);
     } catch (err) {
       logger.error('[AiController.getAiAnalytics] Error loading AI analytics', { error: err.message });
+      next(err);
+    }
+  }
+
+  /**
+   * Prompt 6: List available AI workflow backend tools
+   * GET /api/ai/tools
+   */
+  static async getTools(req, res) {
+    return sendSuccess(res, 'Available AI tools retrieved', TOOL_DEFINITIONS);
+  }
+
+  /**
+   * Prompt 6: Execute structured AI workflow tool call
+   * POST /api/ai/tool-call
+   * The LLM or client may propose a tool call, but the server validates permissions,
+   * authentication, and arguments before executing it.
+   */
+  static async executeToolCall(req, res, next) {
+    try {
+      const { toolName, arguments: toolArgs } = req.body;
+
+      if (!toolName || typeof toolName !== 'string' || toolName.trim().length === 0) {
+        return sendError(res, 'toolName is required and must be a non-empty string.', { code: 'INVALID_TOOL_NAME' }, 400);
+      }
+
+      const userProfile = req.profile || req.user;
+      const result = await aiWorkflowToolsService.executeTool(
+        toolName.trim(),
+        toolArgs || {},
+        userProfile
+      );
+
+      if (result.success === false) {
+        let statusCode = 400;
+        if (result.code === 'UNAUTHENTICATED') statusCode = 401;
+        else if (result.code === 'FORBIDDEN') statusCode = 403;
+        else if (result.code === 'NOT_FOUND') statusCode = 404;
+        else if (result.code === 'INVALID_ARGUMENTS' || result.code === 'MISSING_REQUIRED_FIELDS' || result.code === 'CONFIRMATION_REQUIRED') statusCode = 400;
+
+        return sendError(
+          res,
+          result.error || result.message || 'Tool execution failed',
+          { code: result.code, details: result.details },
+          statusCode
+        );
+      }
+
+      return sendSuccess(res, `Tool '${toolName}' executed successfully`, result);
+    } catch (err) {
+      logger.error('[AiController.executeToolCall] Failed executing tool', { error: err.message });
       next(err);
     }
   }

@@ -3,6 +3,7 @@ import { EmailService } from './email.service.js';
 import { logger } from '../utils/logger.js';
 
 function getDbClient() {
+  if (process.env.NODE_ENV === 'test') return null;
   return supabaseAdmin || supabaseClient;
 }
 

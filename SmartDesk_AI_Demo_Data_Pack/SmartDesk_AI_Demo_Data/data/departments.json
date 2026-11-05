@@ -1,0 +1,57 @@
+[
+  {
+    "code": "IT",
+    "name": "IT Help Desk",
+    "description": "Portal, Wi-Fi, LMS, email and lab systems"
+  },
+  {
+    "code": "EXAM",
+    "name": "Examinations Cell",
+    "description": "Hall tickets, exam registration, results and revaluation"
+  },
+  {
+    "code": "FEE",
+    "name": "Accounts and Fee Section",
+    "description": "Payments, receipts, fee discrepancies and refunds"
+  },
+  {
+    "code": "ATT",
+    "name": "Academic Coordinator",
+    "description": "Attendance discrepancies and course coordination"
+  },
+  {
+    "code": "REG",
+    "name": "Academic Administration",
+    "description": "Bonafide certificates, transcripts and student records"
+  },
+  {
+    "code": "LIB",
+    "name": "Library",
+    "description": "Library card, book records and digital library access"
+  },
+  {
+    "code": "HOSTEL",
+    "name": "Hostel Administration",
+    "description": "Hostel maintenance and facilities"
+  },
+  {
+    "code": "FAC",
+    "name": "Facilities and Maintenance",
+    "description": "Classrooms, furniture, power and equipment"
+  },
+  {
+    "code": "TRAN",
+    "name": "Transport Office",
+    "description": "Bus routes, passes and pickup schedules"
+  },
+  {
+    "code": "STU",
+    "name": "Student Affairs and Grievance Cell",
+    "description": "General and confidential student concerns"
+  },
+  {
+    "code": "ADMISSIONS",
+    "name": "Admissions Office",
+    "description": "Admission and enrollment questions"
+  }
+]

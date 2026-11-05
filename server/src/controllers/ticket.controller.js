@@ -9,7 +9,9 @@ import {
   bulkAssignSchema,
   bulkCloseSchema,
   ticketQuerySchema,
+  reassignDepartmentSchema,
 } from '../validators/ticket.validator.js';
+
 import { sendSuccess } from '../utils/response.js';
 import { supabaseAdmin, supabaseClient } from '../config/supabase.js';
 import { CATEGORIES } from '../ml/taxonomy.js';
@@ -113,6 +115,20 @@ export class TicketController {
       next(err);
     }
   }
+
+  /**
+   * POST /api/tickets/:id/reassign-department
+   */
+  async reassignDepartment(req, res, next) {
+    try {
+      const validated = reassignDepartmentSchema.parse(req.body);
+      const updated = await ticketService.reassignDepartment(req.params.id, validated, req.profile);
+      return sendSuccess(res, 'Ticket department reassigned successfully', updated, 200);
+    } catch (err) {
+      next(err);
+    }
+  }
+
 
   /**
    * POST /api/tickets/:id/reopen

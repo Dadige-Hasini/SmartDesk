@@ -1,0 +1,82 @@
+[
+  {
+    "category": "IT_ACCESS",
+    "steps": [
+      "Ask if official password reset was tried",
+      "Collect exact error and approximate time",
+      "Never request password or OTP",
+      "Route to IT if unresolved"
+    ],
+    "success": "Access restored or staff provide next steps"
+  },
+  {
+    "category": "NETWORK_WIFI",
+    "steps": [
+      "Ask building/floor and time",
+      "Check whether multiple devices are affected",
+      "Suggest official reconnect steps",
+      "Route persistent issue to IT"
+    ],
+    "success": "Connectivity restored or network team owns issue"
+  },
+  {
+    "category": "LMS_TECHNICAL",
+    "steps": [
+      "Collect course, assignment, timestamp and error",
+      "Check displayed file requirements",
+      "Preserve screenshot",
+      "Route to IT and escalate near deadlines"
+    ],
+    "success": "Upload works or approved workaround is communicated"
+  },
+  {
+    "category": "EXAM_HALL_TICKET",
+    "steps": [
+      "Collect exam name, course and semester",
+      "Do not decide eligibility",
+      "Route as P1 to Examinations Cell",
+      "Require human verification"
+    ],
+    "success": "Official resolution or next steps provided"
+  },
+  {
+    "category": "FEE_PAYMENT",
+    "steps": [
+      "Tell student not to pay again until checked",
+      "Collect date, amount and transaction reference securely",
+      "Never collect PIN/password/OTP",
+      "Accounts verifies payment"
+    ],
+    "success": "Payment reconciled or official next steps provided"
+  },
+  {
+    "category": "ATTENDANCE",
+    "steps": [
+      "Collect course code and class date",
+      "Ask for relevant evidence if appropriate",
+      "Route to academic coordinator",
+      "AI must not edit attendance"
+    ],
+    "success": "Authorized verification and response"
+  },
+  {
+    "category": "CERTIFICATE_RECORDS",
+    "steps": [
+      "Identify document and purpose",
+      "Ask only required details",
+      "Route to Academic Administration",
+      "Do not invent completion dates"
+    ],
+    "success": "Approved document or next steps"
+  },
+  {
+    "category": "GRIEVANCE",
+    "steps": [
+      "Acknowledge respectfully",
+      "Avoid collecting unnecessary sensitive detail in chat",
+      "Offer restricted submission",
+      "Route to authorized human reviewer"
+    ],
+    "success": "Restricted case acknowledged and reviewed"
+  }
+]

@@ -9,20 +9,26 @@ export function ThemeProvider({ children }) {
     if (saved) return saved;
 
     // 2. Check system preference
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
+    if (window.matchMedia) {
+      if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+        return 'light';
+      }
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        return 'dark';
+      }
     }
 
-    // Default to dark mode given the Deep Navy aesthetic
-    return 'dark';
+    return 'light';
   });
 
   useEffect(() => {
     const root = document.documentElement;
     if (theme === 'dark') {
       root.classList.add('dark');
+      root.style.colorScheme = 'dark';
     } else {
       root.classList.remove('dark');
+      root.style.colorScheme = 'light';
     }
     localStorage.setItem('smartdesk-theme', theme);
   }, [theme]);

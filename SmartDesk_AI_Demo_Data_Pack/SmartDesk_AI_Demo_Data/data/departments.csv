@@ -1,0 +1,12 @@
+﻿code,name,description
+IT,IT Help Desk,"Portal, Wi-Fi, LMS, email and lab systems"
+EXAM,Examinations Cell,"Hall tickets, exam registration, results and revaluation"
+FEE,Accounts and Fee Section,"Payments, receipts, fee discrepancies and refunds"
+ATT,Academic Coordinator,Attendance discrepancies and course coordination
+REG,Academic Administration,"Bonafide certificates, transcripts and student records"
+LIB,Library,"Library card, book records and digital library access"
+HOSTEL,Hostel Administration,Hostel maintenance and facilities
+FAC,Facilities and Maintenance,"Classrooms, furniture, power and equipment"
+TRAN,Transport Office,"Bus routes, passes and pickup schedules"
+STU,Student Affairs and Grievance Cell,General and confidential student concerns
+ADMISSIONS,Admissions Office,Admission and enrollment questions

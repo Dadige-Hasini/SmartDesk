@@ -4,8 +4,8 @@ import { logger } from '../../../utils/logger.js';
 export class GeminiProvider extends ILlmProvider {
   constructor(config = {}) {
     super();
-    this.apiKey = config.apiKey || process.env.AI_API_KEY || '';
-    this.model = config.model || process.env.AI_MODEL_CHAT || 'gemini-1.5-flash';
+    this.apiKey = (config.apiKey || process.env.LLM_API_KEY || process.env.AI_API_KEY || process.env.GEMINI_API_KEY || '').trim();
+    this.model = (config.model || process.env.LLM_MODEL || process.env.AI_MODEL_CHAT || 'gemini-1.5-flash').trim();
     this.baseUrl = config.baseUrl || 'https://generativelanguage.googleapis.com/v1beta';
     this.timeoutMs = config.timeoutMs || 25000;
   }
@@ -16,7 +16,7 @@ export class GeminiProvider extends ILlmProvider {
       valid: hasKey,
       provider: 'gemini',
       model: this.model,
-      error: hasKey ? null : 'Missing valid AI_API_KEY for Google Gemini provider.',
+      error: hasKey ? null : 'Missing valid LLM_API_KEY for Google Gemini provider.',
     };
   }
 

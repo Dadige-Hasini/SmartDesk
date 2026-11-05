@@ -1,0 +1,30 @@
+[
+  {
+    "priority": "P1",
+    "name": "Urgent",
+    "first_response_minutes": 60,
+    "resolution_hours": 8,
+    "escalate_hours": 2
+  },
+  {
+    "priority": "P2",
+    "name": "High",
+    "first_response_minutes": 240,
+    "resolution_hours": 24,
+    "escalate_hours": 8
+  },
+  {
+    "priority": "P3",
+    "name": "Normal",
+    "first_response_minutes": 480,
+    "resolution_hours": 72,
+    "escalate_hours": 24
+  },
+  {
+    "priority": "P4",
+    "name": "Low",
+    "first_response_minutes": 1440,
+    "resolution_hours": 120,
+    "escalate_hours": 48
+  }
+]

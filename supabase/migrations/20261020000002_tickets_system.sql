@@ -212,6 +212,20 @@ AS $$
         WHERE id = auth.uid() AND department_id = ticket_dept_id AND status = 'ACTIVE'
       )
     )
+    OR
+    -- Authorized grievance officers: staff in Student Affairs/Grievance Cell can view confidential tickets for their department
+    (
+      public.is_staff()
+      AND is_confidential
+      AND EXISTS (
+        SELECT 1 FROM public.profiles p
+        JOIN public.departments d ON p.department_id = d.id
+        WHERE p.id = auth.uid()
+          AND p.department_id = ticket_dept_id
+          AND p.status = 'ACTIVE'
+          AND d.code IN ('STU', 'AFFAIRS')
+      )
+    )
   );
 $$;
 

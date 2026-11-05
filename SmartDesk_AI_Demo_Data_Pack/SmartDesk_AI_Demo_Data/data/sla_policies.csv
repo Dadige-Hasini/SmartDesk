@@ -1,0 +1,5 @@
+﻿priority,name,first_response_minutes,resolution_hours,escalate_hours
+P1,Urgent,60,8,2
+P2,High,240,24,8
+P3,Normal,480,72,24
+P4,Low,1440,120,48

@@ -1,0 +1,52 @@
+[
+  {
+    "id": "POL-001",
+    "title": "AI grounding",
+    "rule": "Answer from approved, current, role-authorized sources. Cite source IDs. If evidence is missing or conflicting, say it cannot be verified and offer human help."
+  },
+  {
+    "id": "POL-002",
+    "title": "Ticket confirmation",
+    "rule": "AI may draft a ticket but must show category, department, priority and description and ask for confirmation before submission."
+  },
+  {
+    "id": "POL-003",
+    "title": "Routing",
+    "rule": "Use deterministic category-to-department rules. Model predictions are suggestions only. Low-confidence or sensitive cases require human review."
+  },
+  {
+    "id": "POL-004",
+    "title": "Authorization",
+    "rule": "Backend validates identity, current role, account status, ownership and department authorization. AI predictions never grant permissions."
+  },
+  {
+    "id": "POL-005",
+    "title": "Audit",
+    "rule": "Record actor, action, entity, timestamp, correlation ID and minimal metadata for privileged changes. Never log passwords, tokens or OTPs."
+  },
+  {
+    "id": "POL-006",
+    "title": "Privacy",
+    "rule": "Internal notes are never returned to students. Confidential grievances are restricted to authorized reviewers."
+  },
+  {
+    "id": "POL-007",
+    "title": "SLA",
+    "rule": "Demo targets are calendar-hour examples only. Production must define working hours, holidays, pause rules and escalation owners."
+  },
+  {
+    "id": "POL-008",
+    "title": "Official records",
+    "rule": "AI must not modify attendance, fee status, marks, eligibility or close tickets outside the approved backend workflow."
+  },
+  {
+    "id": "POL-009",
+    "title": "Files",
+    "rule": "Use private storage, validate file type/signature, enforce size/count limits and authorize every download."
+  },
+  {
+    "id": "POL-010",
+    "title": "Reopening",
+    "rule": "Demo rule: student may request reopening once within seven calendar days after RESOLVED; backend validates and logs request."
+  }
+]

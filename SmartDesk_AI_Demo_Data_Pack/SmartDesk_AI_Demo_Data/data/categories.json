@@ -1,0 +1,153 @@
+[
+  {
+    "code": "IT_ACCESS",
+    "examples": [
+      "forgot portal password",
+      "account locked"
+    ],
+    "department": "IT",
+    "priority": "P2"
+  },
+  {
+    "code": "NETWORK_WIFI",
+    "examples": [
+      "campus Wi-Fi down",
+      "internet slow"
+    ],
+    "department": "IT",
+    "priority": "P2"
+  },
+  {
+    "code": "LMS_TECHNICAL",
+    "examples": [
+      "assignment upload failed",
+      "LMS error"
+    ],
+    "department": "IT",
+    "priority": "P2"
+  },
+  {
+    "code": "EXAM_HALL_TICKET",
+    "examples": [
+      "hall ticket missing",
+      "exam registration issue"
+    ],
+    "department": "EXAM",
+    "priority": "P1",
+    "human_review": true
+  },
+  {
+    "code": "EXAM_RESULTS",
+    "examples": [
+      "result missing",
+      "marks discrepancy",
+      "revaluation"
+    ],
+    "department": "EXAM",
+    "priority": "P2"
+  },
+  {
+    "code": "FEE_PAYMENT",
+    "examples": [
+      "money deducted but unpaid",
+      "receipt missing",
+      "duplicate payment"
+    ],
+    "department": "FEE",
+    "priority": "P1",
+    "human_review": true
+  },
+  {
+    "code": "SCHOLARSHIP",
+    "examples": [
+      "scholarship status",
+      "reimbursement"
+    ],
+    "department": "FEE",
+    "priority": "P2"
+  },
+  {
+    "code": "ATTENDANCE",
+    "examples": [
+      "attendance incorrect",
+      "present marked absent"
+    ],
+    "department": "ATT",
+    "priority": "P2"
+  },
+  {
+    "code": "CERTIFICATE_RECORDS",
+    "examples": [
+      "bonafide certificate",
+      "transcript",
+      "name correction"
+    ],
+    "department": "REG",
+    "priority": "P3"
+  },
+  {
+    "code": "LIBRARY",
+    "examples": [
+      "library card issue",
+      "digital library login"
+    ],
+    "department": "LIB",
+    "priority": "P3"
+  },
+  {
+    "code": "HOSTEL_MAINTENANCE",
+    "examples": [
+      "water leakage",
+      "room electricity"
+    ],
+    "department": "HOSTEL",
+    "priority": "P2"
+  },
+  {
+    "code": "CAMPUS_FACILITIES",
+    "examples": [
+      "projector broken",
+      "classroom fan broken"
+    ],
+    "department": "FAC",
+    "priority": "P3"
+  },
+  {
+    "code": "TRANSPORT",
+    "examples": [
+      "bus route issue",
+      "bus pass"
+    ],
+    "department": "TRAN",
+    "priority": "P2"
+  },
+  {
+    "code": "GRIEVANCE",
+    "examples": [
+      "confidential complaint",
+      "student welfare concern"
+    ],
+    "department": "STU",
+    "priority": "P1",
+    "human_review": true
+  },
+  {
+    "code": "ADMISSIONS",
+    "examples": [
+      "admission status",
+      "enrollment documents"
+    ],
+    "department": "ADMISSIONS",
+    "priority": "P3"
+  },
+  {
+    "code": "OTHER",
+    "examples": [
+      "general SmartDesk question",
+      "unclear request"
+    ],
+    "department": "STU",
+    "priority": "P3",
+    "human_review": true
+  }
+]

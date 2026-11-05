@@ -8,7 +8,8 @@ export class AttachmentController {
   static async upload(req, res, next) {
     try {
       const ticketId = req.params.id;
-      const user = req.user;
+      const user = req.profile || req.user;
+      const role = req.profile?.role || req.userRole;
       const { isInternal } = req.body;
 
       if (!req.files || req.files.length === 0) {
@@ -17,11 +18,14 @@ export class AttachmentController {
         throw err;
       }
 
+      // Enforce: Students can NEVER mark attachments as internal
+      const effectiveInternal = role === 'STUDENT' ? false : (isInternal === 'true' || isInternal === true);
+
       const attachments = await AttachmentService.uploadAttachments({
         files: req.files,
         ticketId,
         user,
-        isInternal: isInternal === 'true' || isInternal === true,
+        isInternal: effectiveInternal,
       });
 
       return responseHandler.created(res, { attachments }, 'Files uploaded successfully');
@@ -36,9 +40,11 @@ export class AttachmentController {
   static async list(req, res, next) {
     try {
       const ticketId = req.params.id;
-      const role = req.userRole;
+      const user = req.profile || req.user;
+      const role = req.profile?.role || req.userRole;
+      const departmentId = req.profile?.department_id || req.userDepartmentId;
 
-      const attachments = await AttachmentService.getTicketAttachments(ticketId, role);
+      const attachments = await AttachmentService.getTicketAttachments(ticketId, user, role, departmentId);
       return responseHandler.success(res, { attachments });
     } catch (err) {
       next(err);
@@ -52,9 +58,9 @@ export class AttachmentController {
   static async download(req, res, next) {
     try {
       const { id: ticketId, attachmentId } = req.params;
-      const user = req.user;
-      const role = req.userRole;
-      const departmentId = req.userDepartmentId;
+      const user = req.profile || req.user;
+      const role = req.profile?.role || req.userRole;
+      const departmentId = req.profile?.department_id || req.userDepartmentId;
 
       const downloadResult = await AttachmentService.getAttachmentDownload({
         ticketId,

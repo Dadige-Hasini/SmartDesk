@@ -159,6 +159,11 @@ CREATE POLICY "Staff can view all comments for their department tickets"
       AND (
         public.get_current_user_role() = 'SUPER_ADMIN'
         OR (t.assigned_department_id = public.get_current_user_department_id() AND t.is_confidential = false)
+        OR (
+          t.assigned_department_id = public.get_current_user_department_id() 
+          AND t.is_confidential = true 
+          AND EXISTS (SELECT 1 FROM public.departments d WHERE d.id = t.assigned_department_id AND d.code IN ('STU', 'AFFAIRS'))
+        )
         OR t.assigned_to = auth.uid()
       )
     )
@@ -206,6 +211,11 @@ CREATE POLICY "Staff can view attachments for their department tickets"
       AND (
         public.get_current_user_role() = 'SUPER_ADMIN'
         OR (t.assigned_department_id = public.get_current_user_department_id() AND t.is_confidential = false)
+        OR (
+          t.assigned_department_id = public.get_current_user_department_id() 
+          AND t.is_confidential = true 
+          AND EXISTS (SELECT 1 FROM public.departments d WHERE d.id = t.assigned_department_id AND d.code IN ('STU', 'AFFAIRS'))
+        )
         OR t.assigned_to = auth.uid()
       )
     )

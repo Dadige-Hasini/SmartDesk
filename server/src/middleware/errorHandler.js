@@ -47,6 +47,27 @@ export function errorHandler(err, req, res, next) {
     );
   }
 
+  // Handle Multer upload errors (e.g. LIMIT_FILE_SIZE, LIMIT_FILE_COUNT)
+  if (err.name === 'MulterError' || err.code === 'LIMIT_FILE_SIZE' || err.code === 'LIMIT_FILE_COUNT') {
+    const isFileSize = err.code === 'LIMIT_FILE_SIZE';
+    const message = isFileSize
+      ? 'File exceeds the maximum permitted size limit of 5 MB.'
+      : (err.message || 'File upload limit exceeded');
+
+    logger.warn('File upload limit exceeded', {
+      requestId,
+      url: req.originalUrl,
+      code: err.code,
+    });
+
+    return sendError(
+      res,
+      message,
+      { code: err.code || 'UPLOAD_LIMIT_EXCEEDED' },
+      400
+    );
+  }
+
   // Custom application error with explicit status code
   const statusCode = err.statusCode || err.status || 500;
   const isServerFault = statusCode >= 500;
@@ -67,16 +88,28 @@ export function errorHandler(err, req, res, next) {
     });
   }
 
-  const message = isServerFault && process.env.NODE_ENV === 'production'
+  // Sanitize error message and details to prevent secret or credential disclosures
+  const SENSITIVE_PATTERN = /(?:password|secret|bearer\s+[^\s]+|token\s*=\s*[^\s]+|api[_-]?key|postgres:\/\/[^\s]+|supabase_secret)[^\s"']*/gi;
+
+  let message = isServerFault && process.env.NODE_ENV === 'production'
     ? 'An unexpected internal error occurred. Please contact support.'
-    : err.message || 'Internal server error';
+    : (err.message || 'Internal server error');
+
+  if (typeof message === 'string') {
+    message = message.replace(SENSITIVE_PATTERN, '[REDACTED_SECRET]');
+  }
+
+  let cleanDetails = err.details || null;
+  if (cleanDetails && typeof cleanDetails === 'string') {
+    cleanDetails = cleanDetails.replace(SENSITIVE_PATTERN, '[REDACTED_SECRET]');
+  }
 
   return sendError(
     res,
     message,
     {
       code: err.code || (isServerFault ? 'INTERNAL_SERVER_ERROR' : 'BAD_REQUEST'),
-      details: err.details || null,
+      details: cleanDetails,
       requestId,
     },
     statusCode

@@ -271,4 +271,195 @@ SmartDesk is an AI-powered college student support portal built with modern full
     - **Production Deployment Guide**: Authored `docs/DEPLOYMENT_GUIDE.md` detailing architecture, environment configuration, migration sequences, SPA routing (`_redirects`, `vercel.json`), SLA daemon execution, backup/PITR protocols, and capacity/cost planning.
     - **100% Test Pass Rate Across All Suites**: 119 backend tests across 10 test suites + 32 frontend tests across 7 test suites = 151 total tests, all passing with zero errors.
     - **Production Build Clean**: Production client bundle built via `vite build` with exit code 0.
+  - **Phase: Supabase Foundation, Migrations, Least-Privilege RLS & Idempotent Demo Seed Pack (Prompt 2 Deliverable)**:
+    - **Client/Server Separation**: Verified role-separated Supabase architecture:
+      - Browser client (`client/src/config/supabase.js`) strictly uses public `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` with session persistence. Zero backend secrets.
+      - Server client (`server/src/config/supabase.js`) isolates public unprivileged client (`supabaseClient`) from administrative service-role client (`supabaseAdmin`), preventing credential leakage.
+    - **Supabase Auth**: Auth token validation implemented in `server/src/middleware/auth.js` via native `supabaseClient.auth.getUser(token)`, coupled with authoritative database profile lookup and active user account checks. Client authentication wired in `client/src/context/AuthContext.jsx`.
+    - **Versioned Migrations & Schema Fixes**:
+      - `20261020000001_departments_and_profiles.sql`: Added missing `get_current_user_department_id()` SECURITY DEFINER function to support department-scoped RLS policies.
+      - `20261020000002_tickets_system.sql`: Enhanced `can_access_ticket` function to enforce confidential grievance access isolation (only creator, Super Admin, and Student Affairs / Grievance Cell staff `STU`/`AFFAIRS` may view confidential tickets).
+      - `20261020000003_comments_attachments_notifications.sql`: Updated comments and attachments RLS policies to allow Student Affairs staff to view confidential grievance notes while isolating regular staff.
+      - `20261020000005_phase6_rag_ai_assistant.sql`: Fixed SQL syntax error in `match_document_chunks` stored procedure (`ORDER JOIN` -> `ORDER BY`).
+      - `20261020000006_phase7_semantic_search_and_ml.sql`: Fixed SQL syntax error in `match_faqs` stored procedure (`ORDER JOIN` -> `ORDER BY`).
+      - `20261020000008_ai_interactions_and_audit_events.sql`: Created versioned migration for `ai_interactions` table, `audit_events` table matching the demo pack, routing rules extended attributes (`rule_id`, `confidence_threshold`, `fallback_department_id`, `human_review`), SLA demo targets, document codes, and demo ticket identifiers.
+      - `supabase/full_schema.sql`: Consolidated production schema combining all 8 migrations into an idempotent single-file script for one-click Supabase deployment.
+    - **Least-Privilege RLS Policies**:
+      - Students see only their own tickets (`created_by = auth.uid()`) and non-internal comments/attachments.
+      - Staff see only tickets and comments within their assigned department.
+      - Confidential grievances (`is_confidential = true`) are strictly restricted to the student creator, Super Admins, and authorized Student Affairs & Grievances officers (`STU`/`AFFAIRS`).
+      - Service-role isolation enforced on `email_jobs` outbox and system audit events.
+    - **Exact pgvector Embeddings (768 Dimensions)**: Verified model dimensions against schema. OpenAI `text-embedding-3-small` with `{ dimensions: 768 }` and Gemini `text-embedding-004` (768 dims native) align with `vector(768)` in `document_chunks` and `faqs`. HNSW vector cosine indexes configured for sub-millisecond retrieval.
+    - **Demo Data Seed & Import Script**: Created `server/scripts/seed_demo_pack.js` (`npm run seed`), reading all data files in `SmartDesk_AI_Demo_Data/data/` (`departments.json`, `categories.json`, `routing_rules.json`, `sla_policies.json`, `faqs.json`, `knowledge_documents.json`, `demo_tickets.json`, `audit_events.json`). Uses upsert logic on unique natural keys (`code`, `rule_id`, `priority`, `faq_code`, `document_code`, `event_id`) ensuring 100% idempotent repeated executions with zero duplicate records.
+    - **Automated Verification & Tests**:
+      - Created `server/tests/supabase.foundation.test.js` verifying credential boundaries, secret isolation, seed idempotency, scoped ticket access, department isolation, confidential grievance restriction, internal note isolation, vector dimensions, and live Supabase connectivity.
+      - Backend test suite: 139 passed / 139 tests across 12 test suites.
+      - Client test suite: 32 passed / 32 tests across 7 test suites.
+      - Total test pass rate: 171 passed tests (100%).
+    - **Prompt 3: Conversational AI Assistant and Grounded RAG Pipeline (Completed)**:
+      - **Server-Side AI Service & API Endpoint**: Dedicated conversational endpoint (`POST /api/ai/chat`) in `server/src/routes/ai.routes.js` and `server/src/controllers/ai.controller.js` protected by `requireAuth`, dedicated AI rate limiter (`30 req/min`), and input validation.
+      - **Knowledge Preloading from Demo Datasets**: `ragService.initializeKnowledge()` loads and chunks 54 approved documents and FAQs from `SmartDesk_AI_Demo_Data/data/` (`knowledge_documents.json`, `faqs.json`, `resolution_playbooks.json`, `policies.json`) with official source IDs (`KB-IT-001`, `FAQ001`, `PLAYBOOK-NETWORK_WIFI`, `POL-001`).
+      - **Chunking & Vector Embeddings**: Documents are chunked into section-aware segments with 768-dimensional embeddings via `embedding.service.js`, matching PostgreSQL `vector(768)` in `document_chunks`.
+      - **Semantic Similarity & Metadata Filtering**: Retains cosine similarity scoring with department and category filtering.
+      - **Scoped Role-Based Authorization**: Students and unauthenticated visitors are strictly isolated from `STAFF_ONLY` and `INTERNAL_DEPARTMENT` documents, unapproved drafts, and retired documents (`queryKnowledge` filter).
+      - **Structured Source Citations**: Returned citations include `sourceId`, `documentTitle`, `section`, snippet, and similarity score, displayed as pill badges in the UI.
+      - **Honest Abstention & Ticket Handoff**: When retrieval confidence is below threshold (< 0.28), the assistant honestly states the answer could not be verified from approved regulations and offers a prefilled ticket draft handoff.
+      - **Anti-Prompt Injection Defense**: Evaluates and neutralizes adversarial override instructions (`ignore instructions`, `say "fees are free"`, `you are now`, `system prompt`) before model invocation.
+      - **Strict Negative Constraints**: System instruction forbids fabricating college rules, exam dates, bus schedules, fees, processing times, contacts, or SLA commitments.
+      - **Student-Friendly Clarification**: Detects short or vague queries (`hi`, `fees`, `wifi`, `help`) and responds with polite clarifying questions and helpful starter action chips.
+      - **Ticket Status Explanation & Backend Ownership Check**: Querying a ticket reference (`TKT-...`, `SD-DEMO-...`) verifies `ticket.created_by === user.id`. Unauthorized students and guests receive a 403 privacy refusal, while creators receive accurate status and SLA explanations.
+      - **Interactive Ticket Draft Confirmation**: AI ticket drafts return category, suggested department, priority, and description with `requiresConfirmation: true`. Displayed in `AiChatPage.jsx` as a dedicated Preview Card with an explicit "Confirm & Review Draft in Ticket Form" button navigating to `/tickets/new`.
+      - **External API & Offline Resilience**: Probed OpenAI embeddings. When upstream accounts report quota exhaustion (HTTP 429), the server cleanly falls back to deterministic 768-dim embeddings and `MockProvider` without crashing or throwing unhandled errors.
+      - **Client UI Enhancement**: Enhanced `AiChatPage.jsx` with source ID pill badges (`[KB-IT-001]`, `[FAQ001]`) and interactive Ticket Draft Preview card.
+      - **Comprehensive Automated Test Suite**:
+        - Created `server/tests/ai.assistant.rag.test.js` with 14 comprehensive tests covering all 17 Prompt 3 requirements.
+        - Backend test suite: 153 tests passed / 153 tests across 13 test suites.
+        - Frontend test suite: 32 tests passed / 32 tests across 7 test suites.
+        - Total: 185 tests passed (100%).
+    - **Prompt 4: Deep-Learning Ticket Classification & Deterministic Department Routing (Completed)**:
+      - **Modular Classifier Contract (`classifier.interface.js`)**: Implemented abstract `TicketClassifierInterface` defining `fit(trainingData)` and `predict(ticket)`. Formats ticket title and description (`${title}. ${description}`) and supports hot-swappable active classifier models without altering downstream routing or API controllers.
+      - **Reproducible Baseline Prototype (`baseline_classifier.js`)**: Built deterministic TF-IDF vectorizer with domain anchor reinforcement and centroid prototype vectors across all 16 canonical categories. Implemented calibrated temperature softmax (`temperature = 0.12`) producing well-calibrated confidence scores and alternative category rankings in sub-millisecond latency.
+      - **Transformer Classifier Adapter & Honest Claim Policy (`transformer_classifier.js`)**: Configured `distilbert-base-uncased` transformer architecture and training pipeline (`distilbert_trainer.py`). In strict adherence to Requirement 3, transparently reports `is_fine_tuned = false` and `model_status = 'PRETRAINED_UNTRAINED_DELEGATED_TO_BASELINE'` because the GPU fine-tuning loop was not run in this environment; zero false claims of completed transformer training.
+      - **Leakage-Free Dataset Splitting & Limitation Notice (`dataset_loader.js`)**: Seeded split (`Mulberry32` seed 42) into train (26), validation (1), and test (16) splits. Verified pairwise cross-split Jaccard token similarity (`0.3333` vs. `< 0.60` threshold). Documented statistical limitation: 43 synthetic demo samples across 16 categories is too small for a statistically reliable independent holdout; reported strictly as a functional demo dataset.
+      - **Empirical Classification Metrics (`evaluate_ticket_classification.js`)**:
+        - *Unseen Test Split (16 classes)*: Accuracy: **93.75%**, Macro Precision: **90.63%**, Macro Recall: **93.75%**, Macro F1-Score: **91.67%**.
+        - *All 43 Demo Samples (16 classes)*: Accuracy: **97.67%**, Macro Precision: **97.92%**, Macro Recall: **97.92%**, Macro F1-Score: **97.50%**.
+        - Zero fabricated metrics; actual results exported to `ml/ticket_classification_evaluation.json` and human-readable audit report in `docs/TICKET_CLASSIFICATION_REPORT.md`.
+      - **Deterministic Department Routing Engine (`routing_engine.js`)**: Enforces institutional rules from `routing_rules.json` after classification. Strict non-authoritative boundary: model only suggests category and confidence; department assignment, priority, and permissions are exclusively controlled by deterministic policy rules.
+      - **Human-Review & Priority Triggers (Requirement 9)**:
+        - Sensitive student grievances (harassment, ragging, discrimination, abuse) -> Routed to Student Affairs (`STU`), priority `P1`, mandatory human review.
+        - Financial discrepancies (charged twice, money deducted, unpaid status) -> Routed to Accounts Section (`FEE`), priority `P1`, manual reconciliation required.
+        - Critical exam deadlines & missing hall tickets -> Routed to Examinations Cell (`EXAM`), priority `P1`, emergency triage flag.
+      - **Low-Confidence Fallback & Clarifying Questions (Requirement 8)**: Confidence below threshold (< 0.70) or unmapped unknown categories automatically trigger safe fallback to Student Affairs review desk (`STU`) with `human_review_required: true` and generate context-aware clarifying questions comparing top candidate categories.
+      - **Secret-Scrubbed Audit Logging (`audit_logger.js`)**: Masks Bearer tokens, API keys, passwords, bank cards, and personal contact PII before writing structured telemetry to `ai_interactions` and `audit_events`.
+      - **Student Ticket Form Review Integration (`CreateTicketPage.jsx`)**: Debounced real-time classification presents students with an "AI Triage & Department Routing" preview card displaying suggested category, target department, priority, human review notices, clarifying question banners, and an "Apply Suggestion" button while leaving final submission authority with the student.
+      - **Real College Data Replacement Guide (`docs/DATA_REPLACEMENT_AND_GOVERNANCE_GUIDE.md`)**: Comprehensive institutional SOP detailing student opt-in consent protocols (FERPA/GDPR/DPDP compliance), automated PII scrubbing (regex + NER), minimum volume requirements (1,600-3,200 consented tickets, 100-200 per category), and step-by-step hot-swapping procedures.
+      - **Automated Verification & Tests**:
+        - 21 comprehensive tests in `server/tests/ticket_classification_routing.test.js` covering modular interface, deterministic baseline, transformer integrity, leakage-free splitting, metric evaluation, deterministic rules, human review triggers, low confidence, unknown categories, secret redaction, and API endpoints.
+        - Backend test suite: 174 passed / 174 tests across 14 test suites (100%).
+        - Frontend test suite: 32 passed / 32 tests across 7 test suites (100%).
+        - Total Workspace Tests: **206 passed / 206 tests (100% pass rate)**.
+    - **Prompt 5: Ticket Workflow, SLA and Audit Engine (Completed)**:
+      - **Supported Statuses & Finite State Machine (Requirements 1 & 2)**:
+        - Implemented all 6 canonical ticket statuses: `OPEN`, `IN_PROGRESS`, `AWAITING_INFO`, `RESOLVED`, `CLOSED`, `REJECTED`.
+        - Server-side finite state transition validation enforced via `ALLOWED_STATUS_TRANSITIONS` in `server/src/services/ticket.service.js`. Invalid transitions (e.g., `OPEN` → `CLOSED` or `OPEN` → `RESOLVED`) are strictly rejected with HTTP 400 `INVALID_STATUS_TRANSITION`.
+        - Role-based transition restrictions prevent students from executing staff-only resolution statuses (HTTP 403 `FORBIDDEN`).
+        - Mandatory resolution summary (minimum 5 characters) enforced for `RESOLVED` status (HTTP 400 `RESOLUTION_SUMMARY_REQUIRED`).
+        - Mandatory documented rejection reason (minimum 5 characters) enforced for `REJECTED` status (HTTP 400 `REJECTION_REASON_REQUIRED`).
+      - **Database-Safe Unique Ticket Numbering (Requirement 3)**:
+        - Generated unique, sequential ticket identifiers adhering strictly to `TKT-YYYYMMDD-XXXX` format via PostgreSQL sequence and atomic fallback, preventing duplicates under high concurrency.
+      - **Submission Persistence, Ownership & Deterministic Department Routing (Requirements 4 & 5)**:
+        - Ticket creation saves student confirmed description, category, department, priority, and student ownership (`created_by`, `student_department_id`).
+        - Deterministic category-to-department routing rules applied during submission.
+        - Added department reassignment endpoint (`POST /api/tickets/:id/reassign-department`) enabling authorized staff and administrators to transfer tickets across departments with a mandatory recorded reason (minimum 5 characters).
+        - Department isolation checks strictly bar outside department staff from modifying or reassigning tickets belonging to other departments (HTTP 403 `FORBIDDEN`).
+      - **Demonstration SLA Deadlines & Asia/Kolkata (IST) Display (Requirements 6 & 7)**:
+        - Demonstration SLA policies loaded directly from `sla_policies.json` in `server/src/services/sla.service.js`, explicitly tagged with `policy_label = 'Demonstration Target (sla_policies.json)'` and `is_demo_target = true`.
+        - Multi-tier SLA deadline calculation for P1 (Urgent: 60m response, 8h resolution, 2h escalation), P2 (High: 4h response, 24h resolution, 8h escalation), P3 (Medium: 8h response, 72h resolution, 24h escalation), and P4 (Low: 24h response, 120h resolution, 48h escalation).
+        - Deadlines stored as canonical UTC ISO strings (`first_response_due_at`, `resolution_due_at`, `escalation_due_at`, `sla_due_at`).
+        - Localized display helpers implemented in `server/src/utils/date.js` (`formatToIST`, `toIstIsoString`, `formatDateOnlyIST`, `formatTimeOnlyIST`) formatting all timestamps into `Asia/Kolkata` (IST, UTC+05:30).
+      - **SLA Watchdog, Approaching Warnings, Escalations & Deduplication (Requirement 8)**:
+        - Upgraded background SLA watchdog in `server/src/workers/sla.worker.js`.
+        - Detects tickets approaching SLA resolution targets (elapsed time >= 80% threshold) and emits `SLA_WARNING` audit events and in-app staff alerts.
+        - Detects tickets exceeding resolution deadlines, flags `is_overdue = true`, and emits `STATUS_CHANGED (OVERDUE)` audit events.
+        - Detects unacknowledged tickets exceeding escalation thresholds, flags `is_escalated = true`, and emits `TICKET_ESCALATED` audit events.
+        - Persistent deduplication cache (`slaAlertsSent` Set, database flags) guarantees zero duplicate notifications across watchdog cycles.
+      - **Asynchronous Notification Resilience (Requirement 9)**:
+        - All notification and email dispatches (`NotificationService.notifyUser`, `EmailService.queueTicketEmail`) are asynchronous and non-blocking with error suppression handlers (`.catch(...)`).
+        - Verified that upstream email or SMTP dispatch failures never interrupt, reject, or undo successful ticket status transitions or reassignments.
+      - **Centralized Append-Only Audit Engine & Secret Sanitization (Requirements 10, 11 & 12)**:
+        - Created `server/src/services/audit.service.js` capturing all critical operations: `TICKET_CREATED`, `TICKET_ASSIGNED`, `TICKET_REASSIGNED`, `STATUS_CHANGED`, `COMMENT_ADDED`, `AI_SUGGESTION`, `ROUTING_SUGGESTION_ACCEPTED`, `ROUTING_SUGGESTION_REJECTED`, `SLA_WARNING`, `TICKET_ESCALATED`, and `KNOWLEDGE_APPROVED`.
+        - Structured records capture actor, actorId, role, action, entity, entityId, UTC timestamp, correlation ID, and minimal contextual metadata.
+        - Strict recursive sanitization (`sanitizeAuditData`) redacts passwords, API keys, Bearer access tokens, OTPs, auth headers, and credit card patterns with `[REDACTED_SECRET]` while preserving UUIDs without false positives.
+        - Append-only integrity enforced at the database level via PostgreSQL Row Level Security (RLS) policies prohibiting `UPDATE` or `DELETE` operations by non-admin users.
+      - **Private Internal Note Isolation from Students (Requirement 13)**:
+        - Internal staff comments (`is_internal = true`) and internal note events are strictly filtered out from students in database queries (`CommentService.getTicketComments`) and API responses (`ticketService.getTicket`).
+        - Staff members and administrators retain visibility into full internal collaboration discussions.
+      - **Confidential Grievance Record Access Restrictions (Requirement 14)**:
+        - Confidential tickets (`is_confidential = true` or `CAT_GRIEVANCE`) restricted strictly to the student creator, Super Admin, and authorized grievance officers (`can_review_grievances: true` or department code `STU`/`AFFAIRS`/`GRIEVANCE`).
+        - Outside department staff and unrelated students receive HTTP 403 `FORBIDDEN` on both read and write attempts.
+      - **Student Single Reopen Within 7 Calendar Days (Requirement 15)**:
+        - Implemented reopen endpoint `POST /api/tickets/:id/reopen` with server-side validation in `ticketService.reopenTicket`.
+        - Permitted strictly once (`reopened_count < 1`) within 7 calendar days after `RESOLVED` or `CLOSED` status. Reopening attempts after the 7-day window or repeated reopens are rejected with HTTP 400.
+        - Reopen events are recorded in `ticket_events` and the centralized append-only audit log (`TICKET_REOPENED`).
+      - **Staff Dashboard Dedicated Views & Queue Presets (Requirement 16)**:
+        - Implemented query presets in `server/src/services/staff.service.js`: `department_queue` (all active tickets in staff department), `assigned_to_me` (tickets assigned to the current staff user), `overdue_cases` (breached/escalated tickets), and `resolution_summaries` (tickets with documented resolution summaries).
+        - Updated `client/src/pages/StaffDashboardPage.jsx` with dedicated tab navigation (Department Queue, Assigned to Me, Overdue Cases, Resolution Summaries), active counter badges, and inline resolution summary display.
+      - **Automated Verification & Tests (Requirement 17)**:
+        - Created `server/tests/ticket.workflow.sla.audit.test.js` containing 26 comprehensive automated tests covering all 18 requirements.
+        - All 26 Prompt 5 tests passed (100%).
+        - Full server test suite: 15/15 test files passed, **200/200 tests passed (100% pass rate)**.
+        - Client test suite: 7/7 test files passed, **32/32 tests passed (100% pass rate)**.
+        - Total Workspace Tests: **232 passed / 232 tests (100% pass rate)**.
+        - Client production build verified clean (`vite build` in 13.60s).
+      - **Safety Boundary Adherence**:
+        - Strictly enforced: neither the LLM assistant nor classification models can bypass authorization or directly modify official attendance, fee, exam, or student records.
+      - **Remaining Work**:
+        - Live production SMTP credentials integration for outbound production email delivery.
+        - Continuous daemon runner setup for standalone production deployment of the SLA watchdog.
+
+---
+
+### Prompt 6: Student-Facing AI Workflows & Tool Validation
+- **Objective**: Integrate the SmartDesk AI assistant with verified backend ticket APIs through structured tool calling, implementing 10 end-to-end conversation workflows, permission validation, source grounding, and institutional safety boundaries.
+- **Dependencies**: Prompt 3 (RAG Pipeline), Prompt 4 (Ticket Classification), Prompt 5 (Workflow, SLA & Audit Engine).
+- **Deliverables & Implementation Details**:
+  - **Structured Backend Tool Architecture (`server/src/services/ai/ai_workflow_tools.service.js`)**:
+    - Created universal structured tool dispatcher enforcing backend validation of arguments and caller authorization before execution.
+    - Defined 9 tool schemas in `TOOL_DEFINITIONS`:
+      1. `get_ticket_status`: Live status with ownership verification.
+      2. `get_sla_explanation`: SLA deadlines in IST with anti-promising disclaimer.
+      3. `get_ticket_resolution`: Staff-approved public resolution summary with internal note isolation.
+      4. `get_info_request_details`: Details on requested information when ticket is `AWAITING_INFO`.
+      5. `reply_to_ticket`: Submit public comment directly to ticket thread.
+      6. `prepare_ticket_draft`: Entity extraction, missing info check, category/dept routing, priority explanation.
+      7. `confirm_and_create_ticket`: Verified ticket creation only upon explicit confirmation (`confirmed: true`).
+      8. `handoff_to_human`: Department contact directory, physical office locations, and working hours.
+      9. `search_faqs_offline`: Deterministic keyword FAQ search without LLM or external API dependencies.
+    - Added REST endpoints: `GET /api/ai/tools` and `POST /api/ai/tool-call` in `server/src/controllers/ai.controller.js` and `server/src/routes/ai.routes.js`.
+  - **Workflow 1: Grounded FAQ with Source Citations**:
+    - Generates document-grounded answers strictly referencing approved policies in `knowledge_documents`.
+    - Returns structured citations (`sourceId`, `documentTitle`, `section`, `snippet`, `similarity`).
+    - Defends against prompt injection attempts attempting to override policies or bypass instructions.
+  - **Workflow 2: Ticket Creation & Draft Confirmation**:
+    - Collects missing information (e.g. room/block for Wi-Fi, transaction ID for fees, course codes for exams).
+    - Predicts category and department using deep learning and deterministic rules.
+    - Explains priority assignments (P1/Urgent for exam deadlines, P2/High for fee discrepancies, P3/Medium for standard issues).
+    - Displays complete draft and strictly mandates explicit confirmation before creating the ticket (`confirmed: true`).
+  - **Workflow 3: Ticket Live Status & Ownership Verification**:
+    - Verifies authenticated student ticket ownership (`isOwner: true` or `role: SUPER_ADMIN`).
+    - Unauthorized students attempting to view another student's ticket are rejected with HTTP 403 `FORBIDDEN`.
+    - Supports conversational natural language queries (e.g., `"status of ticket TKT-20261024-0001"`).
+  - **Workflow 4: Request for More Information & Student Reply**:
+    - When ticket is in `AWAITING_INFO`, extracts the latest public staff request and explains what is needed.
+    - Allows student to reply directly via `reply_to_ticket` tool or conversational syntax (`"reply to ticket TKT-... with: ..."`).
+  - **Workflow 5: Resolution Communication & Privacy Boundary**:
+    - Summarizes staff-approved public resolution notes in clear, student-friendly language.
+    - Strictly isolates and filters internal staff notes (`is_internal: true`), guaranteeing internal diagnostics and tokens are never revealed.
+    - Communicates institutional single-reopen policy permitted within 7 days of resolution.
+  - **Workflow 6: SLA Explanation without Unverified Promises**:
+    - Reads active ticket's actual SLA fields and converts deadlines into `Asia/Kolkata` (IST, UTC+05:30).
+    - Explains escalation level and status when SLA is breached.
+    - Appends mandatory anti-promising disclaimer preventing unverified commitments.
+  - **Workflow 7: Department Routing Rationale & Student Correction**:
+    - Explains why a department was recommended based on classification signals.
+    - Allows students to correct misunderstood details (e.g., `"actually route this to Finance Office"`) before confirmation.
+  - **Workflow 8: Human Handoff Route to Staff**:
+    - Provides physical office locations, working hours, and contact email directory whenever confidence is low (< 0.28), evidence is insufficient, or student requests human assistance.
+  - **Workflow 9: Sensitive Cases & Confidential Grievances**:
+    - Detects sensitive keywords (harassment, ragging, sexual misconduct, threats, mental health crisis).
+    - Activates restricted grievance protocol (`is_confidential: true`, routed strictly to Student Affairs `STU`, priority `P1`/`Urgent`).
+    - Strictly advises students against sharing distressing or graphic personal details in open chat.
+  - **Workflow 10: LLM & Embedding Service Failure Recovery**:
+    - When upstream LLM or embedding provider throws errors or timeouts, executes offline recovery.
+    - Provides non-AI offline keyword FAQ matching and direct support ticket links.
+  - **Institutional Safety Boundary**:
+    - Verified: AI workflows and tools can NEVER alter official student grades, examination records, enrollment status, or fee balances directly.
+- **Verification & Test Results**:
+  - `server/tests/student_ai_workflows.test.js`: **34 passed / 34 tests (100% pass rate)**.
+  - `server/tests/phase6.ai.rag.test.js`: **13 passed / 13 tests (100% pass rate)**.
+  - `server/tests/ticket.workflow.sla.audit.test.js`: **26 passed / 26 tests (100% pass rate)**.
+  - Client test suite: **32 passed / 32 tests (100% pass rate)**.
+  - Total Verified Tests in Workspace: **266 passed tests**.
+
 

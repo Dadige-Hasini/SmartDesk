@@ -15,7 +15,11 @@ router.get('/stats', (req, res, next) => adminController.getGlobalStats(req, res
 // Staff Management
 router.get('/staff', (req, res, next) => adminController.listStaff(req, res, next));
 router.patch('/staff/:id/status', (req, res, next) => adminController.updateStaffStatus(req, res, next));
+router.put('/staff/:id/status', (req, res, next) => adminController.updateStaffStatus(req, res, next));
 router.patch('/staff/:id/permissions', (req, res, next) => adminController.updateStaffPermissions(req, res, next));
+router.put('/staff/:id/permissions', (req, res, next) => adminController.updateStaffPermissions(req, res, next));
+router.patch('/staff/:id/department', (req, res, next) => adminController.updateStaffDepartment(req, res, next));
+router.put('/staff/:id/department', (req, res, next) => adminController.updateStaffDepartment(req, res, next));
 
 // Departments
 router.get('/departments', (req, res, next) => adminController.listDepartments(req, res, next));

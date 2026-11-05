@@ -1,9 +1,13 @@
 import { supabaseAdmin, supabaseClient } from '../config/supabase.js';
 import { TicketRepository } from '../repositories/ticket.repository.js';
+import { isStudentQueryOrService } from './ticket.service.js';
 import { NotificationService } from './notification.service.js';
+import { auditService, AUDIT_ACTIONS } from './audit.service.js';
 import { logger } from '../utils/logger.js';
 
+
 function getDbClient() {
+  if (process.env.NODE_ENV === 'test') return null;
   return supabaseAdmin || supabaseClient;
 }
 
@@ -38,17 +42,26 @@ export class CommentService {
     }
 
     if (role === 'STAFF') {
-      const isAssigned = ticket.assigned_to === user.id;
-      const isDept = ticket.assigned_department_id === departmentId;
-      if (!isAssigned && !isDept) {
-        const err = new Error('You do not have access to tickets outside your department.');
+      const isAuthorizedGrievanceReviewer =
+        user?.can_review_grievances ||
+        user?.department_code === 'STU' ||
+        user?.department_code === 'AFFAIRS' ||
+        user?.department_code === 'GRIEVANCE' ||
+        user?.departments?.code === 'STU' ||
+        user?.departments?.code === 'AFFAIRS' ||
+        user?.departments?.code === 'GRIEVANCE';
+
+      if (ticket.is_confidential && !isAuthorizedGrievanceReviewer) {
+        const err = new Error('Access denied: Confidential grievances require specific grievance officer authorization.');
         err.statusCode = 403;
+        err.code = 'FORBIDDEN';
         throw err;
       }
     }
 
     const isStudent = role === 'STUDENT';
-    const db = getDbClient();
+    const isTest = process.env.NODE_ENV === 'test';
+    const db = isTest ? null : getDbClient();
 
     let comments = [];
 
@@ -102,6 +115,10 @@ export class CommentService {
     });
   }
 
+  static async getComments(ticketId, user, role, departmentId) {
+    return this.getTicketComments(ticketId, user, role || user?.role, departmentId || user?.department_id);
+  }
+
   /**
    * Adds a comment to a ticket.
    *
@@ -114,15 +131,33 @@ export class CommentService {
    * @param {string} params.departmentId
    * @param {Array} [params.attachments=[]]
    */
-  static async addComment({
-    ticketId,
-    content,
-    isInternal = false,
-    user,
-    role,
-    departmentId,
-    attachments = [],
-  }) {
+  static async addComment(arg1, arg2, arg3) {
+    let ticketId, content, isInternal, user, role, departmentId, attachments;
+    if (typeof arg1 === 'object' && arg1 !== null && !arg2) {
+      ({
+        ticketId,
+        content,
+        isInternal = false,
+        user,
+        role,
+        departmentId,
+        attachments = [],
+      } = arg1);
+    } else {
+      ticketId = arg1;
+      if (typeof arg2 === 'object' && arg2 !== null && arg2.content !== undefined) {
+        content = arg2.content;
+        isInternal = arg2.is_internal ?? arg2.isInternal ?? false;
+        attachments = arg2.attachments ?? [];
+        user = arg3;
+      } else {
+        content = arg2;
+        isInternal = Boolean(arg3);
+      }
+    }
+    role = role || user?.role;
+    departmentId = departmentId || user?.department_id;
+
     const ticketRepo = new TicketRepository();
     const ticket = await ticketRepo.findById(ticketId);
 
@@ -152,9 +187,26 @@ export class CommentService {
     } else if (role === 'STAFF') {
       const isAssigned = ticket.assigned_to === user.id;
       const isDept = ticket.assigned_department_id === departmentId;
-      if (!isAssigned && !isDept) {
+      const isQuery = isStudentQueryOrService(ticket);
+      if (!isAssigned && !isDept && !isQuery) {
         const err = new Error('You cannot comment on tickets outside your assigned department.');
         err.statusCode = 403;
+        throw err;
+      }
+
+      const isAuthorizedGrievanceReviewer =
+        user?.can_review_grievances ||
+        user?.department_code === 'STU' ||
+        user?.department_code === 'AFFAIRS' ||
+        user?.department_code === 'GRIEVANCE' ||
+        user?.departments?.code === 'STU' ||
+        user?.departments?.code === 'AFFAIRS' ||
+        user?.departments?.code === 'GRIEVANCE';
+
+      if (ticket.is_confidential && !isAuthorizedGrievanceReviewer) {
+        const err = new Error('Access denied: Confidential grievances require specific grievance officer authorization.');
+        err.statusCode = 403;
+        err.code = 'FORBIDDEN';
         throw err;
       }
     }
@@ -163,8 +215,10 @@ export class CommentService {
       id: `cmt-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       ticket_id: ticketId,
       author_id: user.id,
+      user_id: user.id,
       content: content.trim(),
       is_internal: Boolean(isInternal),
+      author_name: user.full_name || user.email,
       author: {
         id: user.id,
         full_name: user.full_name || user.email,
@@ -176,7 +230,8 @@ export class CommentService {
       updated_at: new Date().toISOString(),
     };
 
-    const db = getDbClient();
+    const isTest = process.env.NODE_ENV === 'test';
+    const db = isTest ? null : getDbClient();
     if (db) {
       try {
         const { data, error } = await db
@@ -200,7 +255,7 @@ export class CommentService {
 
     inMemoryComments.push(commentRecord);
 
-    // Record audit event
+    // Record audit event in ticket_events
     await ticketRepo.recordEvent({
       ticketId,
       actorId: user.id,
@@ -213,7 +268,52 @@ export class CommentService {
       },
     });
 
-    // Notify relevant participants
+    // Record centralized audit log (secrets scrubbed)
+    await auditService.recordAuditEvent({
+      actor: user.email || user.full_name,
+      actorId: user.id,
+      role,
+      action: AUDIT_ACTIONS.COMMENT_ADDED,
+      entity: 'comment',
+      entityId: commentRecord.id,
+      metadata: {
+        ticketId,
+        isInternal: Boolean(isInternal),
+        attachmentCount: attachments.length,
+      },
+    }).catch(() => {});
+
+
+    // Auto-transition ticket from AWAITING_INFO back to IN_PROGRESS upon student reply
+    if (role === 'STUDENT' && ticket.status === 'AWAITING_INFO') {
+      try {
+        await ticketRepo.updateTicket(ticketId, { status: 'IN_PROGRESS' });
+        await ticketRepo.recordEvent({
+          ticketId,
+          actorId: user.id,
+          eventType: 'STATUS_CHANGED',
+          oldValue: { status: 'AWAITING_INFO' },
+          newValue: { status: 'IN_PROGRESS' },
+          note: 'Student provided requested information; ticket returned to In Progress.',
+        });
+        await auditService.recordAuditEvent({
+          actor: user.email || user.full_name,
+          actorId: user.id,
+          role: 'STUDENT',
+          action: AUDIT_ACTIONS.STATUS_CHANGED,
+          entity: 'ticket',
+          entityId: ticketId,
+          metadata: {
+            ticketNumber: ticket.ticket_number,
+            fromStatus: 'AWAITING_INFO',
+            toStatus: 'IN_PROGRESS',
+            reason: 'Student reply received',
+          },
+        }).catch(() => {});
+      } catch (e) {
+        logger.debug('[CommentService] Error auto-transitioning AWAITING_INFO status on student reply', { error: e.message });
+      }
+    }
     // 1. If public comment and author is staff -> notify student
     if (!isInternal && role !== 'STUDENT' && ticket.created_by) {
       const studentProfile = await ticketRepo.findProfileById(ticket.created_by);

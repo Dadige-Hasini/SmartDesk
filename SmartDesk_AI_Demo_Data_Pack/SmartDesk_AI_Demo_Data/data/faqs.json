@@ -1,0 +1,182 @@
+[
+  {
+    "faq_id": "FAQ001",
+    "category": "IT_ACCESS",
+    "question": "I forgot my portal password. What should I do?",
+    "answer": "Use the official Forgot Password flow and follow verification instructions. If it fails, raise an IT ticket. Never share your password or OTP.",
+    "source_document": "KB-IT-001",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  },
+  {
+    "faq_id": "FAQ002",
+    "category": "NETWORK_WIFI",
+    "question": "Campus Wi-Fi is not connecting. What information should I provide?",
+    "answer": "Try the official network instructions. If the issue continues, report the building/floor, device type, approximate time and error. Never include your password.",
+    "source_document": "KB-IT-002",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  },
+  {
+    "faq_id": "FAQ003",
+    "category": "LMS_TECHNICAL",
+    "question": "My assignment upload failed.",
+    "answer": "Check the LMS file requirements and connection. Keep a screenshot and report the course, assignment, time and error to IT. If a deadline is near, mention it.",
+    "source_document": "KB-IT-003",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  },
+  {
+    "faq_id": "FAQ004",
+    "category": "EXAM_HALL_TICKET",
+    "question": "My hall ticket is missing.",
+    "answer": "Check official exam notices and registration status. Raise an urgent Examinations Cell ticket with exam name, course and semester. Only authorized exam staff can confirm eligibility.",
+    "source_document": "KB-EXAM-001",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  },
+  {
+    "faq_id": "FAQ005",
+    "category": "EXAM_RESULTS",
+    "question": "My result or marks look incorrect.",
+    "answer": "Check the official notice for review/revaluation deadlines. Raise an Examinations Cell ticket with subject code and exam session. Do not assume a review outcome.",
+    "source_document": "KB-EXAM-002",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  },
+  {
+    "faq_id": "FAQ006",
+    "category": "FEE_PAYMENT",
+    "question": "Money was deducted but fees show unpaid.",
+    "answer": "Do not immediately pay again. Save date, amount and transaction reference, then contact Accounts through a secure ticket. Never send PINs, passwords or OTPs.",
+    "source_document": "KB-FEE-001",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  },
+  {
+    "faq_id": "FAQ007",
+    "category": "ATTENDANCE",
+    "question": "My attendance is incorrect.",
+    "answer": "Report the course code, class date and relevant evidence to the Academic Coordinator. AI cannot edit attendance; authorized staff must verify records.",
+    "source_document": "KB-ATT-001",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  },
+  {
+    "faq_id": "FAQ008",
+    "category": "CERTIFICATE_RECORDS",
+    "question": "How do I request a bonafide certificate?",
+    "answer": "Use the official student-services process if available, or raise a Certificate/Records ticket. The current college policy must confirm required documents and processing time.",
+    "source_document": "KB-REG-001",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  },
+  {
+    "faq_id": "FAQ009",
+    "category": "LIBRARY",
+    "question": "My digital library access is not working.",
+    "answer": "Check your current student login and service availability. Raise a Library ticket with the service name and error; do not share your password.",
+    "source_document": "KB-LIB-001",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  },
+  {
+    "faq_id": "FAQ010",
+    "category": "HOSTEL_MAINTENANCE",
+    "question": "How do I report a hostel maintenance issue?",
+    "answer": "Create a Hostel Maintenance ticket with block, floor and issue description. For immediate danger, contact campus security/emergency support directly too.",
+    "source_document": "KB-HOSTEL-001",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  },
+  {
+    "faq_id": "FAQ011",
+    "category": "TRANSPORT",
+    "question": "How do I report a bus timing issue?",
+    "answer": "Raise a Transport ticket with route/bus identifier, stop, date and approximate time. Use the latest official notice for schedules; AI must not invent timings.",
+    "source_document": "KB-TRAN-001",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  },
+  {
+    "faq_id": "FAQ012",
+    "category": "GRIEVANCE",
+    "question": "Can I submit a confidential grievance?",
+    "answer": "Use the official confidential grievance flow. Access should be limited to authorized reviewers. Avoid sharing sensitive details in general chat; immediate danger requires urgent human/emergency help.",
+    "source_document": "KB-STU-001",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  },
+  {
+    "faq_id": "FAQ013",
+    "category": "OTHER",
+    "question": "How do I raise a SmartDesk ticket?",
+    "answer": "Sign in, choose Create Ticket, select the closest category, describe the issue, add relevant details and optional evidence, review the suggested department, then confirm submission. Save the ticket ID.",
+    "source_document": "KB-SD-001",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  },
+  {
+    "faq_id": "FAQ014",
+    "category": "OTHER",
+    "question": "How can I check my ticket status?",
+    "answer": "Open My Tickets and select the ticket to view status, assigned department and public updates. Internal notes are not shown to students.",
+    "source_document": "KB-SD-002",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  },
+  {
+    "faq_id": "FAQ015",
+    "category": "OTHER",
+    "question": "What do ticket statuses mean?",
+    "answer": "OPEN is awaiting handling; IN_PROGRESS means staff are working; AWAITING_INFO means more details are needed; RESOLVED means a solution was recorded; CLOSED means completed; REJECTED means declined with a reason.",
+    "source_document": "KB-SD-003",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  },
+  {
+    "faq_id": "FAQ016",
+    "category": "OTHER",
+    "question": "What is an SLA?",
+    "answer": "An SLA is a target for first response and resolution based on priority, not a guarantee. SmartDesk should display the deadline calculated from the active policy and escalate at-risk tickets.",
+    "source_document": "KB-SD-004",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  },
+  {
+    "faq_id": "FAQ017",
+    "category": "OTHER",
+    "question": "Can AI create or assign tickets?",
+    "answer": "AI can draft a ticket and suggest category/department. Show the summary and obtain student confirmation before submission. Backend rules validate and record the actual action.",
+    "source_document": "KB-SD-005",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  },
+  {
+    "faq_id": "FAQ018",
+    "category": "OTHER",
+    "question": "Can AI change my attendance, fees or exam results?",
+    "answer": "No. AI can explain procedures, but official records and ticket decisions require authorized staff or approved backend workflows.",
+    "source_document": "KB-SD-006",
+    "approval_status": "APPROVED_DEMO",
+    "visibility": "STUDENT",
+    "version": "1.0"
+  }
+]

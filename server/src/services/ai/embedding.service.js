@@ -1,21 +1,50 @@
 import { logger } from '../../utils/logger.js';
 
+const STOP_WORDS = new Set([
+  'a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and', 'any', 'are', 'aren',
+  'as', 'at', 'be', 'because', 'been', 'before', 'being', 'below', 'between', 'both', 'but', 'by',
+  'can', 'could', 'did', 'do', 'does', 'doing', 'down', 'during', 'each', 'few', 'for', 'from',
+  'further', 'had', 'has', 'have', 'having', 'he', 'her', 'here', 'hers', 'herself', 'him',
+  'himself', 'his', 'how', 'i', 'if', 'in', 'into', 'is', 'it', 'its', 'itself', 'just', 'me',
+  'more', 'most', 'my', 'myself', 'no', 'nor', 'not', 'now', 'of', 'off', 'on', 'once', 'only',
+  'or', 'other', 'our', 'ours', 'ourselves', 'out', 'over', 'own', 'same', 'she', 'should', 'so',
+  'some', 'such', 'than', 'that', 'the', 'their', 'theirs', 'them', 'themselves', 'then', 'there',
+  'these', 'they', 'this', 'those', 'through', 'to', 'too', 'under', 'until', 'up', 'very', 'was',
+  'we', 'were', 'what', 'when', 'where', 'which', 'while', 'who', 'whom', 'why', 'will', 'with', 'you', 'your'
+]);
+
 export class EmbeddingService {
   constructor(config = {}) {
     this.dimension = parseInt(config.dimension || process.env.AI_EMBEDDING_DIMENSION || '768', 10);
-    this.model = config.model || process.env.AI_MODEL_EMBEDDING || 'text-embedding-004';
-    this.apiKey = config.apiKey || process.env.AI_API_KEY || '';
-    this.provider = (config.provider || process.env.AI_PROVIDER || 'gemini').toLowerCase();
+    this.apiKey = (config.apiKey || process.env.LLM_API_KEY || process.env.AI_API_KEY || process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY || '').trim();
+
+    let model = (config.model || process.env.EMBEDDING_MODEL || process.env.AI_MODEL_EMBEDDING || '').trim();
+    let provider = (config.provider || process.env.AI_PROVIDER || '').trim().toLowerCase();
+
+    if (!provider) {
+      if (this.apiKey.startsWith('sk-') || model.includes('text-embedding-3') || (process.env.LLM_MODEL && process.env.LLM_MODEL.startsWith('gpt-'))) {
+        provider = 'openai';
+      } else if (this.apiKey.startsWith('AIza') || model.includes('gemini') || model.includes('004')) {
+        provider = 'gemini';
+      } else {
+        provider = 'openai';
+      }
+    }
+
+    this.provider = provider;
+    this.model = model || (this.provider === 'openai' ? 'text-embedding-3-small' : 'text-embedding-004');
   }
 
   /**
    * Check if live remote embedding API is configured
    */
   hasLiveCredentials() {
+    if (process.env.NODE_ENV === 'test' && process.env.TEST_LIVE_AI !== 'true') {
+      return false;
+    }
     return Boolean(
-      process.env.NODE_ENV !== 'test' &&
       this.apiKey &&
-      this.apiKey.trim().length > 0 &&
+      this.apiKey.length > 0 &&
       this.apiKey !== 'your-ai-api-key-here'
     );
   }
@@ -96,25 +125,44 @@ export class EmbeddingService {
    */
   async fetchOpenAiEmbedding(text) {
     const url = 'https://api.openai.com/v1/embeddings';
+    const requestBody = {
+      model: this.model || 'text-embedding-3-small',
+      input: text,
+    };
+    // text-embedding-3 models accept dimensions parameter (matches 768 pgvector schema)
+    if (this.model && this.model.includes('text-embedding-3')) {
+      requestBody.dimensions = this.dimension;
+    }
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.apiKey}`,
       },
-      body: JSON.stringify({
-        model: this.model || 'text-embedding-3-small',
-        input: text,
-        dimensions: this.dimension,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI embeddings failed with status ${response.status}`);
+      const errText = await response.text().catch(() => '');
+      throw new Error(`OpenAI embeddings failed with status ${response.status}: ${errText.slice(0, 200)}`);
     }
 
     const data = await response.json();
-    const values = data?.data?.[0]?.embedding;
+    let values = data?.data?.[0]?.embedding;
+    if (!Array.isArray(values) || values.length === 0) {
+      throw new Error('OpenAI embeddings returned empty or invalid data');
+    }
+
+    // Ensure returned dimension strictly matches this.dimension (768 for pgvector schema)
+    if (values.length > this.dimension) {
+      values = values.slice(0, this.dimension);
+    } else if (values.length < this.dimension) {
+      const padded = new Array(this.dimension).fill(0);
+      for (let i = 0; i < values.length; i++) padded[i] = values[i];
+      values = padded;
+    }
+
     return this.normalizeVector(values);
   }
 
@@ -126,8 +174,14 @@ export class EmbeddingService {
    */
   generateDeterministicVector(text, dimension = 768) {
     const vec = new Array(dimension).fill(0);
-    const cleaned = (text || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
-    const tokens = cleaned.split(/\s+/).filter(Boolean);
+    const cleaned = (text || '')
+      .toLowerCase()
+      .replace(/wi-fi/gi, 'wifi')
+      .replace(/e-mail/gi, 'email')
+      .replace(/[^a-z0-9\s]/g, ' ');
+    const allTokens = cleaned.split(/\s+/).filter(Boolean);
+    const contentTokens = allTokens.filter((t) => !STOP_WORDS.has(t) && t.length > 1);
+    const tokens = contentTokens.length > 0 ? contentTokens : allTokens;
 
     if (tokens.length === 0) {
       // Return zero vector if empty

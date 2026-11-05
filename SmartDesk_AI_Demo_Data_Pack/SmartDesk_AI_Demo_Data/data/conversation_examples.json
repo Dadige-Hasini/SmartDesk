@@ -1,0 +1,44 @@
+[
+  {
+    "id": "CHAT-001",
+    "student": "How do I raise a ticket?",
+    "assistant": "Sign in, select Create Ticket, choose the closest category, describe the issue and add relevant details. I can draft it; before submission I will show the summary and ask you to confirm.",
+    "intent": "OTHER",
+    "expected_action": "GUIDE_OR_DRAFT"
+  },
+  {
+    "id": "CHAT-002",
+    "student": "Money was deducted but the portal says unpaid.",
+    "assistant": "Please do not pay again until checked. I can prepare a P1 Accounts ticket. Share the date, amount and transaction reference through the secure form only; never share an OTP, PIN or password. Accounts staff must verify the payment.",
+    "intent": "FEE_PAYMENT",
+    "expected_action": "DRAFT_REQUIRES_CONFIRMATION"
+  },
+  {
+    "id": "CHAT-003",
+    "student": "My attendance is wrong. Can you change it?",
+    "assistant": "I can route this to your Academic Coordinator, but I cannot edit attendance. Please provide the course code and class date in the secure ticket form.",
+    "intent": "ATTENDANCE",
+    "expected_action": "HUMAN_REVIEW"
+  },
+  {
+    "id": "CHAT-004",
+    "student": "When will my bonafide certificate be ready?",
+    "assistant": "I cannot promise a date unless the current approved policy or your live ticket states it. Would you like to create a Certificate/Records ticket?",
+    "intent": "CERTIFICATE_RECORDS",
+    "expected_action": "GROUNDED_ANSWER_OR_OFFER_TICKET"
+  },
+  {
+    "id": "CHAT-005",
+    "student": "I need to report a confidential grievance.",
+    "assistant": "I can help you reach Student Affairs. This should be a restricted case reviewed by an authorized person. Avoid sharing sensitive details in general chat; use the secure confidential submission flow.",
+    "intent": "GRIEVANCE",
+    "expected_action": "RESTRICTED_HUMAN_HANDOFF"
+  },
+  {
+    "id": "CHAT-006",
+    "student": "Can you close my ticket now?",
+    "assistant": "I can explain the closure process, but I cannot bypass it. Use the available confirmation option if your issue is resolved; the backend validates whether closure is permitted.",
+    "intent": "OTHER",
+    "expected_action": "BACKEND_AUTHORIZATION"
+  }
+]

@@ -103,6 +103,16 @@ AS $$
   );
 $$;
 
+CREATE OR REPLACE FUNCTION public.get_current_user_department_id()
+RETURNS UUID
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT department_id FROM public.profiles WHERE id = auth.uid();
+$$;
+
 -- 5. Automatic Profile Creation on auth.users Signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER

@@ -1,5 +1,10 @@
 import '@testing-library/jest-dom';
-import { vi } from 'vitest';
+import { cleanup } from '@testing-library/react';
+import { vi, afterEach } from 'vitest';
+
+afterEach(() => {
+  cleanup();
+});
 
 // Polyfill window.matchMedia for jsdom
 Object.defineProperty(window, 'matchMedia', {
@@ -15,6 +20,19 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: () => {},
   }),
 });
+
+// Polyfill IntersectionObserver for framer-motion whileInView in jsdom
+class MockIntersectionObserver {
+  constructor() {}
+  disconnect() {}
+  observe() {}
+  takeRecords() {
+    return [];
+  }
+  unobserve() {}
+}
+window.IntersectionObserver = MockIntersectionObserver;
+global.IntersectionObserver = MockIntersectionObserver;
 
 // Mock @supabase/supabase-js so background token timers do not hang tests
 vi.mock('@supabase/supabase-js', () => ({
@@ -34,5 +52,13 @@ vi.mock('@supabase/supabase-js', () => ({
       order: vi.fn().mockReturnThis(),
       maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
     })),
+    channel: vi.fn(() => ({
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn((cb) => {
+        if (typeof cb === 'function') cb('SUBSCRIBED');
+        return { status: 'SUBSCRIBED' };
+      }),
+    })),
+    removeChannel: vi.fn(),
   })),
 }));

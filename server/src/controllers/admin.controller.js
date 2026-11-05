@@ -36,6 +36,18 @@ export class AdminController {
     }
   }
 
+  async updateStaffDepartment(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { departmentId } = req.body;
+      const ipAddress = req.ip || req.connection?.remoteAddress;
+      const updated = await adminService.updateStaffDepartment(id, { departmentId }, req.profile, ipAddress);
+      return sendSuccess(res, 'Staff department updated successfully', updated);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   // Global Statistics
   async getGlobalStats(req, res, next) {
     try {

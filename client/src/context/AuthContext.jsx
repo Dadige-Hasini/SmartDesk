@@ -54,7 +54,61 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const loginAsDemoUser = useCallback((demoRole = 'STUDENT') => {
+    const isSuperAdmin = demoRole === 'SUPER_ADMIN';
+    const isStaff = demoRole === 'STAFF';
+    const demoUser = {
+      id: isSuperAdmin
+        ? '7502fc89-9c77-4d07-b29a-77779cc410eb'
+        : (isStaff ? '22222222-2222-2222-2222-222222222222' : '1a1a6f63-690d-4698-bdbf-d93c6a792c55'),
+      email: isSuperAdmin
+        ? 'hasinirajdadige@gmail.com'
+        : (isStaff ? 'staff@smartdesk.edu' : 'student@mallareddyuniversity.ac.in'),
+      user_metadata: {
+        role: demoRole,
+        full_name: isSuperAdmin ? 'Chief Administrator' : (isStaff ? 'Prof. Priya Sharma' : 'Test Student'),
+        department_id: isSuperAdmin ? null : '11111111-1111-1111-1111-111111111111',
+      },
+    };
+    const demoProfile = {
+      id: demoUser.id,
+      email: demoUser.email,
+      full_name: demoUser.user_metadata.full_name,
+      role: demoRole,
+      status: 'ACTIVE',
+      department_id: isSuperAdmin ? null : '11111111-1111-1111-1111-111111111111',
+      departments: isSuperAdmin ? null : {
+        id: '11111111-1111-1111-1111-111111111111',
+        name: 'Computer Science & Engineering',
+        code: 'CSE',
+      },
+    };
+    setUser(demoUser);
+    setProfile(demoProfile);
+    const mockToken = `mock-dev-token-${demoRole.toLowerCase()}`;
+    const sess = { access_token: mockToken, user: demoUser };
+    setSession(sess);
+    localStorage.setItem(
+      'sb-auth-token',
+      JSON.stringify({ access_token: mockToken, demoRole, user: demoUser, profile: demoProfile })
+    );
+    return { user: demoUser, profile: demoProfile };
+  }, []);
+
   useEffect(() => {
+    // Check if there is an existing demo role session in localStorage
+    try {
+      const stored = localStorage.getItem('sb-auth-token');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed?.demoRole) {
+          loginAsDemoUser(parsed.demoRole);
+          setLoading(false);
+          return;
+        }
+      }
+    } catch {}
+
     if (!supabase) {
       setLoading(false);
       return;
@@ -181,6 +235,7 @@ export function AuthProvider({ children }) {
     signUp,
     signOut,
     refreshProfile,
+    loginAsDemoUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

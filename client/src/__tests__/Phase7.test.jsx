@@ -131,6 +131,24 @@ describe('SmartDesk Phase 7: Deep Learning, Semantic Deflection & Admin Analytic
         });
       }
 
+      if (url === '/ai/classify-ticket') {
+        return Promise.resolve({
+          data: {
+            data: {
+              category: 'TUITION_FEES',
+              confidence: 0.88,
+              model_name: 'SmartDesk-Baseline-Classifier-v1',
+              department: 'FEE',
+              department_name: 'Accounts and Fee Section',
+              priority: 'P2',
+              rule_applied: 'ROUTE-06',
+              human_review_required: false,
+              is_fallback: false,
+            },
+          },
+        });
+      }
+
       if (url === '/ai/classify-query') {
         return Promise.resolve({
           data: {
@@ -243,7 +261,7 @@ describe('SmartDesk Phase 7: Deep Learning, Semantic Deflection & Admin Analytic
       expect(screen.getByText(/AI Suggests: Tuition Fees & Payments/i)).toBeInTheDocument();
     });
 
-    const applyBtn = screen.getByRole('button', { name: /Apply/i });
+    const applyBtn = screen.getByRole('button', { name: /^Apply$/i });
     expect(applyBtn).toBeInTheDocument();
     fireEvent.click(applyBtn);
 

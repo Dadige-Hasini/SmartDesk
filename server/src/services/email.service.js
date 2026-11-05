@@ -3,6 +3,7 @@ import { supabaseAdmin, supabaseClient } from '../config/supabase.js';
 import { logger } from '../utils/logger.js';
 
 function getDbClient() {
+  if (process.env.NODE_ENV === 'test') return null;
   return supabaseAdmin || supabaseClient;
 }
 
@@ -51,6 +52,22 @@ export function resetTransporter() {
 }
 
 export class EmailService {
+  /**
+   * Enqueues an email job for ticket status or SLA events.
+   */
+  static async queueTicketEmail(params) {
+    return EmailService.enqueueEmailJob({
+      recipientEmail: params.recipientEmail || (params.recipientId ? `${params.recipientId}@college.edu` : 'staff@college.edu'),
+      recipientName: params.recipientName || '',
+      subject: params.subject,
+      bodyHtml: params.bodyHtml,
+      bodyText: params.bodyText,
+      eventType: params.eventType || 'STATUS_CHANGED',
+      ticketId: params.ticketId,
+      dedupKey: params.dedupKey || `sla-${params.ticketId}-${params.eventType}-${Date.now()}`,
+    });
+  }
+
   /**
    * Enqueues an email job into the reliable asynchronous outbox table.
    * A mail-provider outage will NEVER fail or roll back the calling transaction.
@@ -113,7 +130,7 @@ export class EmailService {
       created_at: new Date().toISOString(),
     };
 
-    if (db) {
+    if (db && process.env.NODE_ENV !== 'test') {
       try {
         const { data, error } = await db
           .from('email_jobs')

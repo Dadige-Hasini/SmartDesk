@@ -1,4 +1,4 @@
-import { ticketRepository, inMemoryTickets } from '../repositories/ticket.repository.js';
+import { ticketRepository, inMemoryTickets, inMemoryProfiles } from '../repositories/ticket.repository.js';
 import { supabaseAdmin, supabaseClient } from '../config/supabase.js';
 import { logger } from '../utils/logger.js';
 
@@ -19,10 +19,16 @@ export class StaffService {
    */
   async getDepartmentQueue(query = {}, staffProfile) {
     const isSuperAdmin = staffProfile.role === 'SUPER_ADMIN';
-    const deptId = isSuperAdmin && query.departmentId ? query.departmentId : staffProfile.department_id;
+    let deptId = null;
 
-    if (!deptId && !isSuperAdmin) {
-      throw new Error('Staff profile is not associated with any college department.');
+    if (query.departmentId !== undefined && query.departmentId !== '') {
+      if (query.departmentId === 'all' || query.departmentId === 'ALL') {
+        deptId = null;
+      } else {
+        deptId = query.departmentId;
+      }
+    } else {
+      deptId = staffProfile.department_id || null;
     }
 
     const {
@@ -33,6 +39,8 @@ export class StaffService {
       dateFrom,
       dateTo,
       search,
+      view, // 'assigned_to_me' | 'department_queue' | 'overdue_cases' | 'resolution_summaries'
+      overdue,
       sortBy = 'priority', // 'priority' | 'created_at' | 'sla_due_at' | 'status'
       sortOrder = 'desc', // 'asc' | 'desc'
       page = 1,
@@ -60,8 +68,34 @@ export class StaffService {
           q = q.eq('assigned_department_id', deptId);
         }
 
+        const isAuthorizedGrievanceReviewer =
+          isSuperAdmin ||
+          staffProfile.can_review_grievances ||
+          staffProfile.department_code === 'STU' ||
+          staffProfile.department_code === 'AFFAIRS' ||
+          staffProfile.department_code === 'GRIEVANCE' ||
+          staffProfile.departments?.code === 'STU' ||
+          staffProfile.departments?.code === 'AFFAIRS' ||
+          staffProfile.departments?.code === 'GRIEVANCE';
+
+        if (!isAuthorizedGrievanceReviewer) {
+          q = q.eq('is_confidential', false);
+        }
+
+        // Apply dedicated view presets
+        if (view === 'assigned_to_me' || assignee === 'me') {
+          q = q.eq('assigned_to', staffProfile.id);
+        } else if (view === 'overdue_cases' || overdue === 'true' || overdue === true) {
+          q = q.eq('is_overdue', true);
+        } else if (view === 'resolution_summaries') {
+          q = q.in('status', ['RESOLVED', 'CLOSED']);
+        } else if (view === 'department_queue' && !status) {
+          // Department queue shows open active cases
+          q = q.in('status', ['OPEN', 'IN_PROGRESS', 'AWAITING_INFO']);
+        }
+
         // Apply filters
-        if (status) {
+        if (status && view !== 'resolution_summaries') {
           if (Array.isArray(status)) q = q.in('status', status);
           else q = q.eq('status', status);
         }
@@ -69,9 +103,7 @@ export class StaffService {
         if (priority) q = q.eq('priority', priority);
         if (assignee === 'unassigned') {
           q = q.is('assigned_to', null);
-        } else if (assignee === 'me') {
-          q = q.eq('assigned_to', staffProfile.id);
-        } else if (assignee) {
+        } else if (assignee && assignee !== 'me' && view !== 'assigned_to_me') {
           q = q.eq('assigned_to', assignee);
         }
         if (dateFrom) q = q.gte('created_at', dateFrom);
@@ -86,19 +118,52 @@ export class StaffService {
       }
     }
 
+
     // Fallback to in-memory store if database yielded zero or is unmigrated
     if (tickets.length === 0 && inMemoryTickets.size > 0) {
       tickets = Array.from(inMemoryTickets.values());
       if (deptId) {
         tickets = tickets.filter((t) => t.assigned_department_id === deptId);
       }
-      if (status) tickets = tickets.filter((t) => t.status === status);
+
+      const isAuthorizedGrievanceReviewer =
+        isSuperAdmin ||
+        staffProfile.can_review_grievances ||
+        staffProfile.department_code === 'STU' ||
+        staffProfile.department_code === 'AFFAIRS' ||
+        staffProfile.department_code === 'GRIEVANCE' ||
+        staffProfile.departments?.code === 'STU' ||
+        staffProfile.departments?.code === 'AFFAIRS' ||
+        staffProfile.departments?.code === 'GRIEVANCE';
+
+      if (!isAuthorizedGrievanceReviewer) {
+        tickets = tickets.filter((t) => !t.is_confidential);
+      }
+
+      if (view === 'assigned_to_me') {
+        tickets = tickets.filter((t) => t.assigned_to === staffProfile.id);
+      } else if (view === 'overdue_cases' || overdue === 'true' || overdue === true) {
+        tickets = tickets.filter(
+          (t) =>
+            t.is_overdue ||
+            (t.sla_due_at &&
+              new Date(t.sla_due_at).getTime() < Date.now() &&
+              !['RESOLVED', 'CLOSED', 'REJECTED'].includes(t.status))
+        );
+      } else if (view === 'resolution_summaries') {
+        tickets = tickets.filter((t) => ['RESOLVED', 'CLOSED'].includes(t.status));
+      } else if (view === 'department_queue' && !status) {
+        tickets = tickets.filter((t) => ['OPEN', 'IN_PROGRESS', 'AWAITING_INFO'].includes(t.status));
+      }
+
+      if (status && view !== 'resolution_summaries') tickets = tickets.filter((t) => t.status === status);
       if (category) tickets = tickets.filter((t) => t.category_id === category);
       if (priority) tickets = tickets.filter((t) => t.priority === priority);
       if (assignee === 'unassigned') tickets = tickets.filter((t) => !t.assigned_to);
-      else if (assignee === 'me') tickets = tickets.filter((t) => t.assigned_to === staffProfile.id);
-      else if (assignee) tickets = tickets.filter((t) => t.assigned_to === assignee);
+      else if (assignee === 'me' && view !== 'assigned_to_me') tickets = tickets.filter((t) => t.assigned_to === staffProfile.id);
+      else if (assignee && view !== 'assigned_to_me') tickets = tickets.filter((t) => t.assigned_to === assignee);
     }
+
 
     // Keyword search
     if (search && search.trim()) {
@@ -159,7 +224,17 @@ export class StaffService {
    */
   async getDepartmentStats(staffProfile, query = {}) {
     const isSuperAdmin = staffProfile.role === 'SUPER_ADMIN';
-    const deptId = isSuperAdmin && query.departmentId ? query.departmentId : staffProfile.department_id;
+    let deptId = null;
+
+    if (query.departmentId !== undefined && query.departmentId !== '') {
+      if (query.departmentId === 'all' || query.departmentId === 'ALL') {
+        deptId = null;
+      } else {
+        deptId = query.departmentId;
+      }
+    } else {
+      deptId = staffProfile.department_id || null;
+    }
 
     const db = getDbClient();
     let tickets = [];
@@ -224,6 +299,11 @@ export class StaffService {
     let totalResponseHours = 0;
     let respondedTicketsCount = 0;
 
+    let assignedToMeTickets = 0;
+    let inProgressTickets = 0;
+    let awaitingInfoTickets = 0;
+    let slaAtRiskTickets = 0;
+
     for (const t of tickets) {
       // Category Breakdown
       const catName = t.category?.name || 'General Inquiries';
@@ -234,14 +314,31 @@ export class StaffService {
         statusCounts[t.status] += 1;
       }
 
-      if (['OPEN', 'IN_PROGRESS', 'AWAITING_INFO'].includes(t.status)) {
+      const isActive = ['OPEN', 'IN_PROGRESS', 'AWAITING_INFO'].includes(t.status);
+
+      if (isActive) {
         openTickets += 1;
         if (!t.assigned_to) unassignedTickets += 1;
         if (t.priority === 'Urgent') urgentTickets += 1;
 
-        // Check if overdue
-        if (t.sla_due_at && new Date(t.sla_due_at).getTime() < now) {
-          overdueTickets += 1;
+        if (t.assigned_to && t.assigned_to === staffProfile.id) {
+          assignedToMeTickets += 1;
+        }
+
+        if (t.status === 'IN_PROGRESS') {
+          inProgressTickets += 1;
+        } else if (t.status === 'AWAITING_INFO') {
+          awaitingInfoTickets += 1;
+        }
+
+        // Check if overdue or approaching SLA deadline (within next 24 hours)
+        if (t.sla_due_at) {
+          const dueTime = new Date(t.sla_due_at).getTime();
+          if (dueTime < now) {
+            overdueTickets += 1;
+          } else if (dueTime <= now + 24 * 3600000) {
+            slaAtRiskTickets += 1;
+          }
         }
       } else if (['RESOLVED', 'CLOSED'].includes(t.status)) {
         resolvedTickets += 1;
@@ -354,14 +451,47 @@ export class StaffService {
       { status: 'REJECTED', name: 'Rejected', count: statusCounts.REJECTED, color: '#ef4444' },
     ].filter((s) => s.count > 0);
 
+    // Fetch active staff and super admin members available for assignment
+    let staffMembers = [];
+    if (db) {
+      try {
+        let staffQ = db
+          .from('profiles')
+          .select('id, full_name, email, role, department_id, status, departments(id, name, code)')
+          .in('role', ['STAFF', 'SUPER_ADMIN'])
+          .eq('status', 'ACTIVE');
+
+        if (deptId) {
+          staffQ = staffQ.or(`department_id.eq.${deptId},role.eq.SUPER_ADMIN`);
+        }
+
+        const { data: staffList } = await staffQ.order('full_name');
+        if (staffList) staffMembers = staffList;
+      } catch (e) {
+        logger.warn('Failed to load staff members for assignment', { error: e.message });
+      }
+    }
+
+    if (staffMembers.length === 0 && inMemoryProfiles.size > 0) {
+      staffMembers = Array.from(inMemoryProfiles.values()).filter(
+        (p) => (p.role === 'STAFF' || p.role === 'SUPER_ADMIN') && p.status === 'ACTIVE'
+      );
+    }
+
     return {
       overview: {
         totalTickets,
         openTickets,
         resolvedTickets,
         unassignedTickets,
-        urgentTickets,
+        assignedToMeTickets,
+        myAssignedTickets: assignedToMeTickets,
+        inProgressTickets,
+        awaitingInfoTickets,
         overdueTickets,
+        slaAtRiskTickets,
+        overdueOrApproachingSla: overdueTickets + slaAtRiskTickets,
+        urgentTickets,
         slaComplianceRate,
         averageResponseTime,
         averageResponseHours,
@@ -374,6 +504,7 @@ export class StaffService {
         categoryDistribution,
         statusBreakdown,
       },
+      staffMembers,
     };
   }
 }

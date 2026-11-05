@@ -1,5 +1,6 @@
 import { supabaseAdmin, supabaseClient } from '../config/supabase.js';
 import { TicketRepository } from '../repositories/ticket.repository.js';
+import { isStudentQueryOrService } from './ticket.service.js';
 import { validateAttachment, MAX_ATTACHMENTS_PER_REQUEST } from '../utils/fileValidation.js';
 import { logger } from '../utils/logger.js';
 
@@ -30,6 +31,55 @@ export class AttachmentService {
     isInternal = false,
   }) {
     if (!files || files.length === 0) return [];
+
+    const ticketRepo = new TicketRepository();
+    const ticket = await ticketRepo.findById(ticketId);
+    if (!ticket) {
+      const err = new Error('Ticket not found.');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const role = user?.role || 'STUDENT';
+    const departmentId = user?.department_id;
+
+    if (role === 'STUDENT') {
+      if (ticket.created_by !== user.id) {
+        const err = new Error('Access denied: You cannot upload attachments to another student\'s ticket.');
+        err.statusCode = 403;
+        throw err;
+      }
+      if (isInternal) {
+        const err = new Error('Access denied: Students cannot mark attachments as internal.');
+        err.statusCode = 403;
+        throw err;
+      }
+    } else if (role === 'STAFF') {
+      const isAssigned = ticket.assigned_to === user.id;
+      const isDept = ticket.assigned_department_id === departmentId;
+      const isQuery = isStudentQueryOrService(ticket);
+      if (!isAssigned && !isDept && !isQuery) {
+        const err = new Error('Access denied: You cannot upload attachments to tickets outside your department.');
+        err.statusCode = 403;
+        throw err;
+      }
+
+      const isAuthorizedGrievanceReviewer =
+        user?.can_review_grievances ||
+        user?.department_code === 'STU' ||
+        user?.department_code === 'AFFAIRS' ||
+        user?.department_code === 'GRIEVANCE' ||
+        user?.departments?.code === 'STU' ||
+        user?.departments?.code === 'AFFAIRS' ||
+        user?.departments?.code === 'GRIEVANCE';
+
+      if (ticket.is_confidential && !isAuthorizedGrievanceReviewer) {
+        const err = new Error('Access denied: Confidential grievances require specific grievance officer authorization.');
+        err.statusCode = 403;
+        err.code = 'FORBIDDEN';
+        throw err;
+      }
+    }
 
     if (files.length > MAX_ATTACHMENTS_PER_REQUEST) {
       const err = new Error(
@@ -164,9 +214,26 @@ export class AttachmentService {
     if (role === 'STAFF') {
       const isAssigned = ticket.assigned_to === user.id;
       const isDept = ticket.assigned_department_id === departmentId;
-      if (!isAssigned && !isDept) {
+      const isQuery = isStudentQueryOrService(ticket);
+      if (!isAssigned && !isDept && !isQuery) {
         const err = new Error('You do not have access to tickets outside your department.');
         err.statusCode = 403;
+        throw err;
+      }
+
+      const isAuthorizedGrievanceReviewer =
+        user?.can_review_grievances ||
+        user?.department_code === 'STU' ||
+        user?.department_code === 'AFFAIRS' ||
+        user?.department_code === 'GRIEVANCE' ||
+        user?.departments?.code === 'STU' ||
+        user?.departments?.code === 'AFFAIRS' ||
+        user?.departments?.code === 'GRIEVANCE';
+
+      if (ticket.is_confidential && !isAuthorizedGrievanceReviewer) {
+        const err = new Error('Access denied: Confidential grievances require specific grievance officer authorization.');
+        err.statusCode = 403;
+        err.code = 'FORBIDDEN';
         throw err;
       }
     }
@@ -238,9 +305,55 @@ export class AttachmentService {
   }
 
   /**
-   * Retrieves all attachments associated with a ticket, filtered by role.
+   * Retrieves all attachments associated with a ticket, filtered by role and authorized access.
    */
-  static async getTicketAttachments(ticketId, role) {
+  static async getTicketAttachments(ticketId, userOrRole, maybeRole, maybeDeptId) {
+    let user = null;
+    let role = 'STUDENT';
+    let departmentId = null;
+
+    if (typeof userOrRole === 'object' && userOrRole !== null) {
+      user = userOrRole;
+      role = maybeRole || user.role || 'STUDENT';
+      departmentId = maybeDeptId || user.department_id;
+    } else if (typeof userOrRole === 'string') {
+      role = userOrRole;
+    }
+
+    const ticketRepo = new TicketRepository();
+    const ticket = await ticketRepo.findById(ticketId);
+    if (!ticket) {
+      const err = new Error('Ticket not found.');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (user) {
+      if (role === 'STUDENT' && ticket.created_by !== user.id) {
+        const err = new Error('Access denied: You cannot view attachments for another student\'s ticket.');
+        err.statusCode = 403;
+        throw err;
+      }
+
+      if (role === 'STAFF') {
+        const isAuthorizedGrievanceReviewer =
+          user?.can_review_grievances ||
+          user?.department_code === 'STU' ||
+          user?.department_code === 'AFFAIRS' ||
+          user?.department_code === 'GRIEVANCE' ||
+          user?.departments?.code === 'STU' ||
+          user?.departments?.code === 'AFFAIRS' ||
+          user?.departments?.code === 'GRIEVANCE';
+
+        if (ticket.is_confidential && !isAuthorizedGrievanceReviewer) {
+          const err = new Error('Access denied: Confidential grievances require specific grievance officer authorization.');
+          err.statusCode = 403;
+          err.code = 'FORBIDDEN';
+          throw err;
+        }
+      }
+    }
+
     const isStudent = role === 'STUDENT';
     const db = getDbClient();
 
